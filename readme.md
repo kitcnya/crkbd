@@ -7,3 +7,9 @@ to minimize moving the hands using Corne Keyboard, which is the cute
 42 keys vertically staggered keyboard.
 
 see: [Foostan's Corne keyboard](https://github.com/foostan/crkbd/)
+
+My goal are:
+
+- Can generate all keycodes defined on US 104 keyboard,
+- Japanese input using SKK can be easily done, and
+- Friendly to use with Emacs.
