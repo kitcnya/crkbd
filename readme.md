@@ -20,8 +20,7 @@ I'm using [QMK Firmware](https://docs.qmk.fm/),
 and the firmware with special keymap is created
 according to the instructions on that web pages.
 Visit the page
-[Building QMK with GitHub Userspace]
-(https://docs.qmk.fm/#/newbs_building_firmware_workflow?id=building-qmk-with-github-userspace)
+[Building QMK with GitHub Userspace](https://docs.qmk.fm/#/newbs_building_firmware_workflow?id=building-qmk-with-github-userspace)
 for more detailed description.
 
 ## How to see my keymap
