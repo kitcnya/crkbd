@@ -30,10 +30,10 @@ with my *.json file.
 
 ## Current keyboard layouts
 
-[Layout 0](docs/L0.png "Layout 0")
+![Layout 0](docs/L0.png "Layout 0")
 
-[Layout 1](docs/L1.png "Layout 1")
+![Layout 1](docs/L1.png "Layout 1")
 
-[Layout 2](docs/L2.png "Layout 2")
+![Layout 2](docs/L2.png "Layout 2")
 
-[Layout 3](docs/L3.png "Layout 3")
+![Layout 3](docs/L3.png "Layout 3")
