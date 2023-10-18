@@ -27,3 +27,13 @@ for more detailed description.
 
 You can use the site [QMK Configurator](https://config.qmk.fm/#/crkbd/rev1/LAYOUT_split_3x6_3)
 with my *.json file.
+
+## Current keyboard layouts
+
+[Layout 0](docs/L0.png "Layout 0")
+
+[Layout 1](docs/L1.png "Layout 1")
+
+[Layout 2](docs/L2.png "Layout 2")
+
+[Layout 3](docs/L3.png "Layout 3")
