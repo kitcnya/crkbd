@@ -30,10 +30,18 @@ with my *.json file.
 
 ## Current keyboard layouts
 
-![Layout 0](docs/L0.png "Layout 0")
+### Default Map (Layer 0)
 
-![Layout 1](docs/L1.png "Layout 1")
+![Layout 0](docs/L0.png "Layer 0")
 
-![Layout 2](docs/L2.png "Layout 2")
+### Alternative Default Map (Layer 1)
 
-![Layout 3](docs/L3.png "Layout 3")
+![Layout 1](docs/L1.png "Layer 1")
+
+### Supplemental Map (Layer 2)
+
+![Layout 2](docs/L2.png "Layer 2")
+
+### Shifted Supplemental Map (Layer 3)
+
+![Layout 3](docs/L3.png "Layer 3")
