@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "notes": "",
+  "notes": "default map",
   "documentation": "\"This file is a QMK Configurator export. You can import this at <https://config.qmk.fm>. It can also be used directly with QMK's source code.\n\nTo setup your QMK environment check out the tutorial: <https://docs.qmk.fm/#/newbs>\n\nYou can convert this file to a keymap.c using this command: `qmk json2c {keymap}`\n\nYou can compile this keymap using this command: `qmk compile {keymap}`\"\n",
   "keyboard": "crkbd/rev1",
   "keymap": "kitcnya",
@@ -18,7 +18,7 @@
       "KC_I",
       "KC_O",
       "KC_P",
-      "DF(1)",
+      "KC_NO",
       "KC_TAB",
       "KC_A",
       "KC_S",
@@ -31,7 +31,7 @@
       "KC_L",
       "KC_MINS",
       "KC_NO",
-      "KC_NO",
+      "DF(1)",
       "KC_Z",
       "KC_X",
       "KC_C",
@@ -139,19 +139,19 @@
       "KC_APP"
     ],
     [
-      "ANY(CL_NORM)",
+      "KC_NO",
       "KC_F11",
       "KC_F12",
       "KC_PSCR",
       "KC_SCRL",
       "KC_PAUS",
+      "KC_CAPS",
+      "ANY(CL_TOGG)",
+      "ANY(CL_NORM)",
+      "KC_NO",
       "KC_NUM",
       "KC_NO",
       "KC_NO",
-      "KC_NO",
-      "KC_NO",
-      "KC_NO",
-      "ANY(CL_TOGG)",
       "KC_EXLM",
       "KC_AT",
       "KC_HASH",
@@ -163,7 +163,7 @@
       "KC_LPRN",
       "KC_RPRN",
       "KC_NO",
-      "KC_CAPS",
+      "KC_NO",
       "KC_LCBR",
       "KC_TILD",
       "KC_PIPE",
@@ -180,8 +180,8 @@
       "KC_TRNS",
       "KC_INS",
       "KC_TRNS",
-      "KC_NO"
+      "QK_BOOT"
     ]
-  ]
+  ],
   "author": "kitcnya@outlook.com"
 }
