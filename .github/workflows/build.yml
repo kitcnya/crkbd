@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - '**.json'
+      - '**.c'
+      - '**.h'
+      - '**.mk'
 
 jobs:
   build:
