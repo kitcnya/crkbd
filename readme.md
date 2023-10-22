@@ -1,6 +1,6 @@
 <!-- -*- mode: markdown; coding: utf-8 -*- -->
 
-# Keymap Laboratory Using Corne Keyboard
+# Keymap laboratory using Corne keyboard
 
 This site contains that the trials in order to create special keymaps
 to minimize moving the hands using Corne Keyboard, which is the cute
@@ -86,7 +86,7 @@ In the end, we only need to define 100 keys.
 
 ## Current keyboard layouts
 
-### Default Map (Layer 0)
+### Default map (Layer 0)
 
 Since I want to minimize the movement of my pinkies during normal input,
 I generally place the character keys within 5 columns.
@@ -105,7 +105,7 @@ it also allows for path input, which is indispensable to me. :-)
 
 ![Layout 0](docs/L0.png "Layer 0")
 
-### Alternative Map (Layer 1)
+### Alternative map (Layer 1)
 
 This is for entering numbers quickly like using number keypad.
 F9 key is not wrong! It is used in Excel.
@@ -115,10 +115,10 @@ From Layer 0, TT(1) allows this map enabled momentally or alternatively.
 
 ![Layout 1](docs/L1.png "Layer 1")
 
-### Supplemental Map (Layer 2)
+### Supplemental map (Layer 2)
 
 ![Layout 2](docs/L2.png "Layer 2")
 
-### Shifted Supplemental Map (Layer 3)
+### Shifted supplemental map (Layer 3)
 
 ![Layout 3](docs/L3.png "Layer 3")
