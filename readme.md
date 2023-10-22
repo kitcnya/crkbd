@@ -2,6 +2,8 @@
 
 # Keymap laboratory using Corne keyboard
 
+![Corne keyboard](docs/corne.jpeg)
+
 This site contains that the trials in order to create special keymaps
 to minimize moving the hands using Corne Keyboard, which is the cute
 42 keys vertically staggered keyboard.
