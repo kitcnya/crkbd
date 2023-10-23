@@ -17,6 +17,7 @@ jobs:
 # List of keymap json files to build
         file:
         - kitcnya.json
+        - kitcnya1.json
 # End of json file list
 
     steps:
