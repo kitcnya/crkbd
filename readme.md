@@ -105,22 +105,27 @@ That will be understandable to SKK users,
 but many may prefer a different key. However,
 it also allows for path input, which is indispensable to me. :-)
 
+Note: SKK on/off key for me is Shift + Space.
+
 ![Layout 0](docs/L0.png "Layer 0")
 
-### Alternative map (Layer 1)
+### Supplemental map (Layer 1)
+
+All other keys for printable characters are in this map.
+There are 47 keys including the layer 0 character keys.
+
+![Layout 1](docs/L1.png "Layer 1")
+
+### Alternative map (Layer 2)
 
 This is for entering numbers quickly like using number keypad.
 F9 key is not wrong! It is used in Excel.
 I'm still at a loss as to which keys to include and where to place them.
 
-From Layer 0, TT(1) allows this map enabled momentally or alternatively.
-
-![Layout 1](docs/L1.png "Layer 1")
-
-### Supplemental map (Layer 2)
+From Layer 0, TT(2) allows this map enabled momentally or alternatively.
 
 ![Layout 2](docs/L2.png "Layer 2")
 
-### Shifted supplemental map (Layer 3)
+### Function key map (Layer 3)
 
 ![Layout 3](docs/L3.png "Layer 3")
