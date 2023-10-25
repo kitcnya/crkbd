@@ -44,8 +44,8 @@
       "KC_SLSH",
       "KC_LGUI",
       "KC_LALT",
-      "KC_LSFT",
       "KC_LCTL",
+      "KC_LSFT",
       "LT(1,KC_SPC)",
       "KC_ENT",
       "KC_DEL"
@@ -132,8 +132,8 @@
       "KC_PSLS",
       "KC_PENT",
       "KC_LALT",
-      "KC_LSFT",
       "KC_LCTL",
+      "KC_LSFT",
       "KC_TAB",
       "KC_P0",
       "KC_PDOT"
