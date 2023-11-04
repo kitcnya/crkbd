@@ -29,7 +29,7 @@ for more detailed description.
 ## How to see my keymap
 
 You can use the site [QMK Configurator](https://config.qmk.fm/#/crkbd/rev1/LAYOUT_split_3x6_3)
-with my *.json file.
+with my [kitcnya.json](https://raw.githubusercontent.com/kitcnya/crkbd/master/kitcnya.json) file.
 
 ## Features I look for in a keyboard
 
