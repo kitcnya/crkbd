@@ -38,7 +38,7 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 #ifdef CONSOLE_ENABLE
 	if (debug_enable) {
 		uint16_t time = timer_elapsed(basetime);
-		uprintf("%05d %04X %s\n", time, keycode, (record->event.press ? "D" : "U"));
+		uprintf("%05d %04X %s\n", time, keycode, (record->event.pressed ? "p" : "r"));
 	}
 #endif
 	return true;
