@@ -129,4 +129,6 @@ From Layer 0, TT(2) allows this map enabled momentally or alternatively.
 
 ### Function key map (Layer 3)
 
+The function keys from F13 to F24 are for programing using source.c in the future.
+
 ![Layout 3](docs/L3.png "Layer 3")
