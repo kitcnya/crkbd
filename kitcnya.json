@@ -163,7 +163,7 @@
       "KC_F19",
       "KC_F20",
       "KC_VOLU",
-      "KC_CALC",
+      "ANY(CL_TOGG)",
       "KC_F21",
       "KC_F22",
       "KC_F23",
@@ -178,8 +178,8 @@
       "KC_TRNS",
       "KC_TRNS",
       "KC_TRNS",
-      "ANY(CL_TOGG)",
       "KC_PSCR",
+      "KC_CALC",
       "KC_MUTE"
     ]
   ],
