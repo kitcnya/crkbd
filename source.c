@@ -62,7 +62,7 @@ oled_task_user(void)
 	};
 	uint8_t top;
 
-	if (is_keyboard_master()) return true;
+	if (!is_keyboard_master()) return true;
 	top = get_highest_layer(layer_state);
 	if (top < LAYER_AUTO_OFF_LAYER) return true;
 	oled_write_P(crkbd_logo, true);
