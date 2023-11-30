@@ -11,7 +11,7 @@
 #endif
 
 #ifndef LAYER_AUTO_OFF_TIMEOUT
-#define LAYER_AUTO_OFF_TIMEOUT	10000	/* XXX: value for test */
+#define LAYER_AUTO_OFF_TIMEOUT	10000
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 #ifndef LAYER_AUTO_OFF_LAYER
@@ -22,6 +22,19 @@
 
 static uint32_t layer_auto_off_action_timer = 0;
 static uint16_t layer_auto_off_nkeypressed = 0;
+
+bool
+oled_task_user(void)
+{
+	uint8_t top;
+	bool invert;
+
+	if (!is_keyboard_master()) return true;
+	top = get_highest_layer(layer_state);
+	invert = !(top < LAYER_AUTO_OFF_LAYER);
+	oled_invert(invert);
+	return true;
+}
 
 static void
 layer_auto_off_check(void)
@@ -49,19 +62,6 @@ layer_auto_off_record(keyrecord_t *record)
 	} else if (layer_auto_off_nkeypressed > 0) {
 		layer_auto_off_nkeypressed--;
 	}
-}
-
-bool
-oled_task_user(void)
-{
-	uint8_t top;
-	bool invert;
-
-	if (!is_keyboard_master()) return true;
-	top = get_highest_layer(layer_state);
-	invert = !(top < LAYER_AUTO_OFF_LAYER);
-	oled_invert(invert);
-	return true;
 }
 
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
