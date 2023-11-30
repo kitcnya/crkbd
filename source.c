@@ -61,7 +61,7 @@ oled_task_user(void)
 	top = get_highest_layer(layer_state);
 	invert = !(top < LAYER_AUTO_OFF_LAYER);
 	oled_invert(invert);
-	return false;
+	return true;
 }
 
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
