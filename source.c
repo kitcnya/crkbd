@@ -141,10 +141,10 @@ static struct multi_tap_or_hold_layer_def {
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_layer_state state;
 } multi_tap_or_hold_layer[] = {
-	MTHLSDEF(KC_HELP, 2, 3),
+	MTHLDEF(KC_HELP, 2, 3),
 };
 
-#define NMTHLDEF (sizeof(multi_tap_or_hold_layer) / sizeof(struct multi_tap_or_hold_layer_def))
+#define NMTHLDEFS (sizeof(multi_tap_or_hold_layer) / sizeof(struct multi_tap_or_hold_layer_def))
 
 static void
 mthl_timer_action(struct multi_tap_or_hold_layer_def *p)
@@ -152,14 +152,14 @@ mthl_timer_action(struct multi_tap_or_hold_layer_def *p)
 	if (p->state == WAITING_RELEASE_OR_T1) {
 		/* momentary layer 1 */
 		layer_on(p->layer1);
-		p->WAITING_RELEASE_FOR_L1;
+		p->state = WAITING_RELEASE_FOR_L1;
 	} else if (p->state == WAITING_PRESS_OR_T2) {
 		/* toggle layer 1 */
 		layer_on(p->layer1);
 	} else if (p->state == WAITING_RELEASE_OR_T3) {
 		/* momentary layer 2 */
 		layer_on(p->layer2);
-		p->WAITING_RELEASE_FOR_L2;
+		p->state = WAITING_RELEASE_FOR_L2;
 	}
 	p->pending = false;
 }
