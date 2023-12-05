@@ -110,10 +110,40 @@ Note: SKK on/off key for me is Shift + Space.
 
 ![Layout 0](docs/L0.png "Layer 0")
 
+#### "Help" Key (for multi layer selection)
+
+In my layer 0, it includes Help key.
+This is a pseudo key for trapping key stroke by using one that I don't need.
+It doesn't need to be a Help key.
+It works like followings:
+
+- Single tapping key for causing toggle layer 2 active like TG(2),
+- Holding key for momentary layer 2 active like MO(2),
+- Double tapping key for causing toggle layer 3 active like TG(3), and
+- Tap and (released once) then holding key for causing layer 3 active like MO(3).
+
+#### Auto deactivation of higher layer (for layer 2 and 3)
+
+Toggle layer feature (a.k.a. TG() key in QMK firmware) is very useful
+when we continues to type keys in one layer.
+But, after the while,
+we sometime lost in our memory the layer we have ever been used.
+In order not to make a mistake using the wrong layer,
+I added two features like followings:
+
+- Highlight the OLED display when using modal layers (the first image bellow) and
+- Auto deactivation the layer after 10 seconds from last key operations
+  (just like to the second image below in normal state).
+
+![Emphasized display](docs/layer23.jpeg)
+![Normal display](docs/layer01.jpeg)
+
 ### Supplemental map (Layer 1)
 
 All other keys for printable characters are in this map.
 There are 47 keys including the layer 0 character keys.
+And also it has cursor navigation keys in this layer.
+Almost keyboard inputs would be done by using layer 0 and layer 1.
 
 ![Layout 1](docs/L1.png "Layer 1")
 
@@ -121,9 +151,6 @@ There are 47 keys including the layer 0 character keys.
 
 This is for entering numbers quickly like using number keypad.
 F9 key is not wrong! It is used in Excel.
-I'm still at a loss as to which keys to include and where to place them.
-
-From Layer 0, TT(2) allows this map enabled momentally or alternatively.
 
 ![Layout 2](docs/L2.png "Layer 2")
 
