@@ -113,7 +113,7 @@ layer_auto_off_record(keyrecord_t *record)
  * +--------+------+---+----+---+------+-----------------
  */
 
-#define MTHL_TIMER	175
+#define MTHL_TIMER	190
 
 #define MTHLDEF(pkc, n1, n2)						\
 	{								\
