@@ -67,7 +67,7 @@ layer_auto_off_record(keyrecord_t *record)
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 /*
- * Multi Tap or Hold Layer Selection
+ * Multi Tap or Hold layer selection
  * ===========================
  *
  * kc is pressed then released after the T1:
@@ -113,9 +113,9 @@ layer_auto_off_record(keyrecord_t *record)
  * +--------+------+---+----+---+------+-----------------
  */
 
-#define MTHL_TIMER	190
+#define MTH_TIMER	190
 
-#define MTHLDEF(pkc, n1, n2)						\
+#define MTHDEF(pkc, n1, n2)						\
 	{								\
 		.kc = (pkc),						\
 		.layer1 = (n1),						\
@@ -124,7 +124,7 @@ layer_auto_off_record(keyrecord_t *record)
 		.state = WAITING_PRESS,					\
 	}
 
-enum multi_tap_or_hold_layer_state {
+enum multi_tap_or_hold_state {
 	WAITING_PRESS,
 	WAITING_RELEASE_OR_T1,
 	WAITING_PRESS_OR_T2,
@@ -133,68 +133,78 @@ enum multi_tap_or_hold_layer_state {
 	WAITING_RELEASE_FOR_L2,
 };
 
-static struct multi_tap_or_hold_layer_def {
+static struct multi_tap_or_hold_def {
 	uint16_t kc;			/* keycode to sense */
 	uint8_t layer1;			/* first prefered layer number */
 	uint8_t layer2;			/* second prefered layer number */
 	uint16_t timer;			/* timer for measuring interval */
 	bool pending;			/* timer pending action exists */
-	enum multi_tap_or_hold_layer_state state;
-} multi_tap_or_hold_layer[] = {
-	MTHLDEF(KC_HELP, 2, 3),
+	enum multi_tap_or_hold_state state;
+} multi_tap_or_hold[] = {
+	MTHDEF(KC_HELP, 2, 3),
 };
 
-#define NMTHLDEFS (sizeof(multi_tap_or_hold_layer) / sizeof(struct multi_tap_or_hold_layer_def))
+#define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
 
 static void
-mthl_timer_action(struct multi_tap_or_hold_layer_def *p)
+mth_timer_action(struct multi_tap_or_hold_def *p)
 {
-	if (p->state == WAITING_RELEASE_OR_T1) {
+	p->pending = false;
+	switch (p->state) {
+	case WAITING_RELEASE_OR_T1:
 		/* momentary layer 1 */
 		layer_on(p->layer1);
 		p->state = WAITING_RELEASE_FOR_L1;
-	} else if (p->state == WAITING_PRESS_OR_T2) {
+		return;
+	case WAITING_PRESS_OR_T2:
 		/* toggle layer 1 */
 		layer_on(p->layer1);
-	} else if (p->state == WAITING_RELEASE_OR_T3) {
+		break;
+	case WAITING_RELEASE_OR_T3:
 		/* momentary layer 2 */
 		layer_on(p->layer2);
 		p->state = WAITING_RELEASE_FOR_L2;
+		return;
 	}
-	p->pending = false;
+	p->state = WAITING_PRESS;
 }
 
 static void
-mthl_process_record(struct multi_tap_or_hold_layer_def *p, keyrecord_t *record)
+mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 {
 	p->pending = false;
-	if (record->event.pressed) {
-		if (p->state == WAITING_PRESS) {
-			p->pending = true;
-			p->timer = timer_read();
-			p->state = WAITING_RELEASE_OR_T1;
-		} else if (p->state == WAITING_PRESS_OR_T2) {
-			p->pending = true;
-			p->timer = timer_read();
-			p->state = WAITING_RELEASE_OR_T3;
-		}
-	} else {
-		if (p->state == WAITING_RELEASE_OR_T1) {
-			p->pending = true;
-			p->timer = timer_read();
-			p->state = WAITING_PRESS_OR_T2;
-		} else if (p->state == WAITING_RELEASE_OR_T3) {
-			/* toggle layer 2 */
-			layer_on(p->layer2);
-			p->state = WAITING_PRESS;
-		} else if (p->state == WAITING_RELEASE_FOR_L1) {
-			layer_off(p->layer1);
-			p->state = WAITING_PRESS;
-		} else if (p->state == WAITING_RELEASE_FOR_L2) {
-			layer_off(p->layer2);
-			p->state = WAITING_PRESS;
-		}
+	switch (p->state) {
+	case WAITING_PRESS:
+		if (!record->event.pressed) break;
+		p->pending = true;
+		p->timer = timer_read();
+		p->state = WAITING_RELEASE_OR_T1;
+		return;
+	case WAITING_RELEASE_OR_T1:
+		if (record->event.pressed) break;
+		p->pending = true;
+		p->timer = timer_read();
+		p->state = WAITING_PRESS_OR_T2;
+		return;
+	case WAITING_PRESS_OR_T2:
+		if (!record->event.pressed) break;
+		p->pending = true;
+		p->timer = timer_read();
+		p->state = WAITING_RELEASE_OR_T3;
+		return;
+	case WAITING_RELEASE_OR_T3:
+		if (record->event.pressed) break;
+		/* toggle layer 2 */
+		layer_on(p->layer2);
+		break;
+	case WAITING_RELEASE_FOR_L1:
+		layer_off(p->layer1);
+		break;
+	case WAITING_RELEASE_FOR_L2:
+		layer_off(p->layer2);
+		break;
 	}
+	p->state = WAITING_PRESS;
 }
 
 /*
@@ -209,17 +219,17 @@ void
 housekeeping_task_user(void)
 {
 	int i;
-	struct multi_tap_or_hold_layer_def *p;
+	struct multi_tap_or_hold_def *p;
 
 #if LAYER_AUTO_OFF_TIMEOUT > 0
 	layer_auto_off_check();
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 	for (i = 0; i < NMTHLDEFS; i++) {
-		p = &multi_tap_or_hold_layer[i];
+		p = &multi_tap_or_hold[i];
 		if (!p->pending) continue;
 		if (timer_elapsed(p->timer) < MTHL_TIMER) continue;
-		mthl_timer_action(p);
+		mth_timer_action(p);
 	}
 }
 
@@ -227,7 +237,7 @@ bool
 process_record_user(uint16_t keycode, keyrecord_t *record)
 {
 	int i;
-	struct multi_tap_or_hold_layer_def *p;
+	struct multi_tap_or_hold_def *p;
 
 #ifdef CONSOLE_ENABLE
 	if (debug_enable) {
@@ -243,9 +253,9 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 	for (i = 0; i < NMTHLDEFS; i++) {
-		p = &multi_tap_or_hold_layer[i];
+		p = &multi_tap_or_hold[i];
 		if (keycode != p->kc) continue;
-		mthl_process_record(p, record);
+		mth_process_record(p, record);
 		return false;
 	}
 	return true;
