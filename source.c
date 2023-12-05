@@ -165,6 +165,7 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 		layer_on(p->layer2);
 		p->state = WAITING_RELEASE_FOR_L2;
 		return;
+	default:
 	}
 	p->state = WAITING_PRESS;
 }
@@ -203,6 +204,7 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 	case WAITING_RELEASE_FOR_L2:
 		layer_off(p->layer2);
 		break;
+	default:
 	}
 	p->state = WAITING_PRESS;
 }
@@ -225,10 +227,10 @@ housekeeping_task_user(void)
 	layer_auto_off_check();
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
-	for (i = 0; i < NMTHLDEFS; i++) {
+	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
 		if (!p->pending) continue;
-		if (timer_elapsed(p->timer) < MTHL_TIMER) continue;
+		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
 		mth_timer_action(p);
 	}
 }
@@ -252,7 +254,7 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 	layer_auto_off_record(record);
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
-	for (i = 0; i < NMTHLDEFS; i++) {
+	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
 		if (keycode != p->kc) continue;
 		mth_process_record(p, record);
