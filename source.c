@@ -166,6 +166,7 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 		p->state = WAITING_RELEASE_FOR_L2;
 		return;
 	default:
+		break;
 	}
 	p->state = WAITING_PRESS;
 }
@@ -205,6 +206,7 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 		layer_off(p->layer2);
 		break;
 	default:
+		break;
 	}
 	p->state = WAITING_PRESS;
 }
