@@ -119,7 +119,7 @@
       "KC_P6",
       "KC_PMNS",
       "KC_BSPC",
-      "TG(2)",
+      "KC_AGAIN",
       "KC_PGUP",
       "KC_NO",
       "KC_DOWN",
@@ -134,7 +134,7 @@
       "KC_LALT",
       "KC_LCTL",
       "KC_LSFT",
-      "LT(3,KC_SPC)",
+      "KC_SPC",
       "KC_PENT",
       "KC_DEL"
     ],
@@ -178,7 +178,7 @@
       "KC_LALT",
       "KC_LCTL",
       "KC_LSFT",
-      "KC_TRNS",
+      "KC_SPC",
       "KC_ENT",
       "KC_DEL"
     ]

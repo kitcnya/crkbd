@@ -122,6 +122,15 @@ It works like followings:
 - Double tapping key for causing toggle layer 3 active like TG(3), and
 - Tap and (released once) then holding key for causing layer 3 active like MO(3).
 
+The "Again" key in layer 2 also works in much the same way as the "Help" key.
+
+It works like followings:
+
+- Single tapping key for causing toggle layer 2 inactive like TG(2),
+- Holding key for momentary layer 3 active like MO(3),
+- Double tapping key for causing toggle layer 3 active like TG(3), and
+- Tap and (released once) then holding key for causing layer 3 active like MO(3).
+
 #### Auto deactivation of higher layer (for layer 2 and 3)
 
 Toggle layer feature (a.k.a. TG() key in QMK firmware) is very useful

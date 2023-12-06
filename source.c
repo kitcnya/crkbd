@@ -122,11 +122,13 @@ layer_auto_off_record(keyrecord_t *record)
 
 #define MTH_TIMER	190
 
-#define MTHDEF(pkc, n1, n2)						\
+#define MTHDEF(pkc, n1, n2, t1, t2)					\
 	{								\
 		.kc = (pkc),						\
 		.layer1 = (n1),						\
 		.layer2 = (n2),						\
+		.toggle1 = (t1),					\
+		.toggle2 = (t2),					\
 		.pending = false,					\
 		.state = WAITING_PRESS,					\
 	}
@@ -144,11 +146,14 @@ static struct multi_tap_or_hold_def {
 	uint16_t kc;			/* keycode to sense */
 	uint8_t layer1;			/* first prefered layer number */
 	uint8_t layer2;			/* second prefered layer number */
+	uint8_t toggle1;		/* toggle layer by single tapping */
+	uint8_t toggle2;		/* toggle layer by double tapping */
 	uint16_t timer;			/* timer for measuring interval */
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_state state;
 } multi_tap_or_hold[] = {
-	MTHDEF(KC_HELP, 2, 3),
+	MTHDEF(KC_HELP , 2, 3, 2, 3),
+	MTHDEF(KC_AGAIN, 3, 3, 2, 3),
 };
 
 #define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
@@ -165,7 +170,7 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 		return;
 	case WAITING_PRESS_OR_T2:
 		/* toggle layer 1 */
-		layer_on(p->layer1);
+		layer_invert(p->toggle1);
 		break;
 	case WAITING_RELEASE_OR_T3:
 		/* momentary layer 2 */
@@ -204,7 +209,7 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 	case WAITING_RELEASE_OR_T3:
 		if (record->event.pressed) break;
 		/* toggle layer 2 */
-		layer_on(p->layer2);
+		layer_invert(p->toggle2);
 		break;
 	case WAITING_RELEASE_FOR_L1:
 		layer_off(p->layer1);
