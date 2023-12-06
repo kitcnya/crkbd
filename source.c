@@ -33,11 +33,13 @@ oled_task_user(void)
 	top = get_highest_layer(layer_state);
 	invert = !(top < LAYER_AUTO_OFF_LAYER);
 	oled_invert(invert);
-	if (keymap_config.swap_control_capslock) {
-		oled_write_ln_P(PSTR("CTRL <-> CAPS"), false);
-	} else {
-		oled_write_ln_P(PSTR("-------------"), false);
+	if (debug_enable) {
+		oled_write_P(PSTR("DEBUG "), false);
 	}
+	if (keymap_config.swap_control_capslock) {
+		oled_write_P(PSTR("SWAP "), false);
+	}
+	oled_write_ln_P(PSTR(""), false);
 	return true;
 }
 
