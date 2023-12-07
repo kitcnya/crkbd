@@ -10,6 +10,10 @@
 #include "print.h"
 #endif
 
+/*
+ * Higher Layer Auto Off Timer
+ */
+
 #ifndef LAYER_AUTO_OFF_TIMEOUT
 #define LAYER_AUTO_OFF_TIMEOUT	10000
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
@@ -20,26 +24,6 @@
 
 static uint32_t layer_auto_off_action_timer = 0;
 static uint16_t layer_auto_off_nkeypressed = 0;
-
-bool
-oled_task_user(void)
-{
-	uint8_t top;
-	bool invert;
-
-	if (!is_keyboard_master()) return true;
-	top = get_highest_layer(layer_state);
-	invert = !(top < LAYER_AUTO_OFF_LAYER);
-	oled_invert(invert);
-	if (debug_enable) {
-		oled_write_P(PSTR("DEBUG "), false);
-	}
-	if (keymap_config.swap_control_capslock) {
-		oled_write_P(PSTR("SWAP "), false);
-	}
-	oled_write_ln_P(PSTR(""), false);
-	return true;
-}
 
 static void
 layer_auto_off_check(void)
@@ -221,11 +205,27 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 
 /*
  * System Interfaces
- *
- * see:
- * - https://docs.qmk.fm/#/custom_quantum_functions
- * - https://docs.qmk.fm/#/feature_macros
  */
+
+bool
+oled_task_user(void)
+{
+	uint8_t top;
+	bool invert;
+
+	if (!is_keyboard_master()) return true;
+	top = get_highest_layer(layer_state);
+	invert = !(top < LAYER_AUTO_OFF_LAYER);
+	oled_invert(invert);
+	if (debug_enable) {
+		oled_write_P(PSTR("DEBUG "), false);
+	}
+	if (keymap_config.swap_control_capslock) {
+		oled_write_P(PSTR("SWAP "), false);
+	}
+	oled_write_ln_P(PSTR(""), false);
+	return true;
+}
 
 void
 housekeeping_task_user(void)
