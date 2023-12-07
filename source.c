@@ -18,8 +18,6 @@
 #define LAYER_AUTO_OFF_LAYER	2	/* lowest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER */
 
-#if LAYER_AUTO_OFF_TIMEOUT > 0
-
 static uint32_t layer_auto_off_action_timer = 0;
 static uint16_t layer_auto_off_nkeypressed = 0;
 
@@ -70,8 +68,6 @@ layer_auto_off_record(keyrecord_t *record)
 		layer_auto_off_nkeypressed--;
 	}
 }
-
-#endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 /*
  * Multi Tap or Hold layer selection
@@ -237,9 +233,7 @@ housekeeping_task_user(void)
 	int i;
 	struct multi_tap_or_hold_def *p;
 
-#if LAYER_AUTO_OFF_TIMEOUT > 0
 	layer_auto_off_check();
-#endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
@@ -264,9 +258,7 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 	}
 #endif /* CONSOLE_ENABLE */
 
-#if LAYER_AUTO_OFF_TIMEOUT > 0
 	layer_auto_off_record(record);
-#endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
