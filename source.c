@@ -249,7 +249,6 @@ static struct tapping_multi_modifier_assistant {
 	bool ctrl;			/* assist ctrl */
 	bool shift;			/* assist shift */
 } tma = {
-	.enable = true,
 	.state = WAITING_MODIFIER_PRESS,
 };
 
@@ -264,7 +263,7 @@ static struct tapping_multi_modifier_assistant_keys {
 	TMADEF(KC_LSFT, &tma.shift),
 };
 
-#define NTMAKEYS (sizeof(tmakeys) / sizeof(struct tapping_multi_modifier_assistant_keys))
+#define NTMAKEYS (sizeof(tmakey) / sizeof(struct tapping_multi_modifier_assistant_keys))
 
 static void
 tma_assist_press(uint16_t kc)
@@ -348,14 +347,14 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 	for (i = 0; i < NTMAKEYS; i++) {
 		p = &tmakey[i];
 		if (p->kc != keycode) continue;
-		p->press = record->press;
+		p->press = record->event.pressed;
 		k = p;
 	}
 	if (!k) return;
 
 	switch (tma.state) {
 	case WAITING_MODIFIER_PRESS:
-		if (!record->press) return;
+		if (!record->event.pressed) return;
 		tma.kc = keycode;
 		tma.timer = timer_read();
 		tma.state = WAITING_MODIFIER_RELEASE_OR_T1;
@@ -370,7 +369,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 		tma.state = CLEAN_FOR_NEXT_MODIFIER_PRESS;
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
-		if (!record->press) {
+		if (!record->event.pressed) {
 			tma.state = CLEAN_ASSIST_MODIFIERS;
 			return;
 		}
