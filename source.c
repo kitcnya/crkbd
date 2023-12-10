@@ -244,7 +244,7 @@ enum tapping_multi_modifier_assitant_state {
 static struct tapping_multi_modifier_assistant {
 	uint16_t kc;			/* (modifier) key code */
 	uint16_t timer;			/* timer for measuring interval */
-	enum multi_tap_or_hold_timing_state state;
+	enum tapping_multi_modifier_assitant_state state;
 	bool alt;			/* assist alt */
 	bool ctrl;			/* assist ctrl */
 	bool shift;			/* assist shift */
