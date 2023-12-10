@@ -248,10 +248,10 @@ static struct tapping_multi_modifier_assistant {
 	bool alt;			/* assist alt */
 	bool ctrl;			/* assist ctrl */
 	bool shift;			/* assist shift */
-} = {
+} tma = {
 	.enable = true,
 	.state = WAITING_MODIFIER_PRESS,
-} tma;
+};
 
 static struct tapping_multi_modifier_assistant_keys {
 	uint16_t kc;			/* (modifier) key code */
