@@ -361,7 +361,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 		return;
 	case WAITING_MODIFIER_RELEASE_OR_T1:
 		if (keycode != tma.kc) {
-			tma.state = CLEAN_ASSIST_MODIFIERS;
+			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
 		*k->assist = true;
@@ -370,7 +370,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
 		if (!record->event.pressed) {
-			tma.state = CLEAN_ASSIST_MODIFIERS;
+			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
 		tma_assist_press(keycode);
