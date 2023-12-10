@@ -204,6 +204,194 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 }
 
 /*
+ * Tapping Multi-modifier Assistant
+ * ================================
+ *
+ * 0----------....>T1 (waiting for release)
+ * |          0----|----............>T2 (waiting for press)
+ * |          |    |    0----------....>T1
+ * |          |    |    |          0----------|..........>T2
+ * |          |    |    |          |          0-------------->T1
+ * +----------+----+----+----------+----------+---------------+---------
+ * |== mkc1 ==|    |    |          |          |               |
+ * |                    |== mkc2 ==|          |               |
+ * |            assist :--- mkc1 ---:         |               |
+ * |                                          |== mkc3 =======|=====|
+ * |                                 assist :---- mkc1 --------------:
+ * |                                  assist :--- mkc2 ---------------:
+ */
+
+#define TMA_TIMER1	120
+#define TMA_TIMER2	700
+
+#define TMADEF(mkc, passist)						\
+	{								\
+		.kc = (mkc),						\
+		.press = false,						\
+		.assist_press = false,					\
+		.assist = (passist),					\
+	}
+
+enum tapping_multi_modifier_assitant_state {
+	WAITING_MODIFIER_PRESS,
+	WAITING_MODIFIER_RELEASE_OR_T1,
+	CLEAN_FOR_NEXT_MODIFIER_PRESS,
+	WAITING_MODIFIER_PRESS_OR_T2,
+	CLEAN_ASSIST_MODIFIRES,
+	WAITING_MODIFIER_RELEASE,
+};
+
+static struct tapping_multi_modifier_assistant {
+	uint16_t kc;			/* (modifier) key code */
+	uint16_t timer;			/* timer for measuring interval */
+	enum multi_tap_or_hold_timing_state state;
+	bool alt;			/* assist alt */
+	bool ctrl;			/* assist ctrl */
+	bool shift;			/* assist shift */
+} = {
+	.enable = true,
+	.state = WAITING_MODIFIER_PRESS,
+} tma;
+
+static struct tapping_multi_modifier_assistant_keys {
+	uint16_t kc;			/* (modifier) key code */
+	bool press;			/* key press detected */
+	bool assist_press; 		/* key press emitted */
+	bool *assist;			/* use for assist */
+} tmakey[] = {
+	TMADEF(KC_LALT, &tma.alt),
+	TMADEF(KC_LCTL, &tma.ctrl),
+	TMADEF(KC_LSFT, &tma.shift),
+};
+
+#define NTMAKEYS (sizeof(tmakeys) / sizeof(struct tapping_multi_modifier_assistant_keys))
+
+static void
+tma_assist_press(uint16_t kc)
+{
+	int i;
+	struct tapping_multi_modifier_assistant_keys *p;
+
+	for (i = 0; i < NTMAKEYS; i++) {
+		p = &tmakey[i];
+		if (p->kc == kc) {
+			if (p->assist_press) {
+				unregister_code(p->kc);
+				p->assist_press = false;
+			}
+			*p->assist = false;
+			continue;
+		}
+		if (!*p->assist) continue;
+		if (p->assist_press) continue;
+		register_code(p->kc);
+		p->assist_press = true;
+	}
+}
+
+static void
+tma_assist_release(bool keep_assist)
+{
+	int i;
+	struct tapping_multi_modifier_assistant_keys *p;
+
+	for (i = 0; i < NTMAKEYS; i++) {
+		p = &tmakey[i];
+		if (!keep_assist) *p->assist = false;
+		if (!p->assist_press) continue;
+		unregister_code(p->kc);
+		p->assist_press = false;
+	}
+}
+
+static void
+tma_check(void)
+{
+	int i;
+	struct tapping_multi_modifier_assistant_keys *p;
+
+	switch (tma.state) {
+	case WAITING_MODIFIER_RELEASE_OR_T1:
+		if (timer_elapsed(tma.timer) < TMA_TIMER1) return;
+		tma.state = WAITING_MODIFIER_RELEASE;
+		return;
+	case CLEAN_FOR_NEXT_MODIFIER_PRESS:
+		tma_assist_release(true);
+		tma.state = WAITING_MODIFIER_PRESS_OR_T2;
+		return;
+	case WAITING_MODIFIER_PRESS_OR_T2:
+		if (timer_elapsed(tma.timer) < TMA_TIMER2) return;
+		tma_assist_release(false);
+		tma.state = WAITING_MODIFIER_PRESS;
+		return;
+	case CLEAN_ASSIST_MODIFIRES:
+		tma_assist_release(false);
+		tma.state = WAITING_MODIFIER_RELEASE;
+		for (i = 0; i < NTMAKEYS; i++) {
+			p = &tmakey[i];
+			if (p->press) return;
+		}
+		tma.state = WAITING_MODIFIER_PRESS;
+		return;
+	default:
+		break;
+	}
+}
+
+static void
+tma_process_record(uint16_t keycode, keyrecord_t *record)
+{
+	int i;
+	struct tapping_multi_modifier_assistant_keys *p, *k;
+
+	k = 0;
+	for (i = 0; i < NTMAKEYS; i++) {
+		p = &tmakey[i];
+		if (p->kc != keycode) continue;
+		p->press = record->press;
+		k = p;
+	}
+	if (!k) return;
+
+	switch (tma.state) {
+	case WAITING_MODIFIER_PRESS:
+		if (!record->press) return;
+		tma.kc = keycode;
+		tma.timer = timer_read();
+		tma.state = WAITING_MODIFIER_RELEASE_OR_T1;
+		return;
+	case WAITING_MODIFIER_RELEASE_OR_T1:
+		if (keycode != tma.kc) {
+			tma.state = CLEAN_ASSIST_MODIFIERS;
+			return;
+		}
+		*k->assist = true;
+		tma.timer = timer_read();
+		tma.state = CLEAN_FOR_NEXT_MODIFIER_PRESS;
+		return;
+	case WAITING_MODIFIER_PRESS_OR_T2:
+		if (!record->press) {
+			tma.state = CLEAN_ASSIST_MODIFIERS;
+			return;
+		}
+		tma_assist_press(keycode);
+		tma.kc = keycode;
+		tma.timer = timer_read();
+		tma.state = WAITING_MODIFIER_RELEASE_OR_T1;
+		return;
+	case WAITING_MODIFIER_RELEASE:
+		for (i = 0; i < NTMAKEYS; i++) {
+			p = &tmakey[i];
+			if (p->press) return;
+		}
+		tma.state = WAITING_MODIFIER_PRESS;
+		break;
+	default:
+		break;
+	}
+}
+
+/*
  * System Interfaces
  */
 
@@ -223,6 +411,19 @@ oled_task_user(void)
 	if (keymap_config.swap_control_capslock) {
 		oled_write_P(PSTR("SWAP "), false);
 	}
+	if (tma.alt || tma.ctrl || tma.shift) {
+		oled_write_P(PSTR("TMA-"), false);
+		if (tma.alt) {
+			oled_write_P(PSTR("A"), false);
+		}
+		if (tma.ctrl) {
+			oled_write_P(PSTR("C"), false);
+		}
+		if (tma.shift) {
+			oled_write_P(PSTR("S"), false);
+		}
+		oled_write_P(PSTR(" "), false);
+	}
 	oled_write_ln_P(PSTR(""), false);
 	return true;
 }
@@ -234,6 +435,8 @@ housekeeping_task_user(void)
 	struct multi_tap_or_hold_def *p;
 
 	layer_auto_off_check();
+
+	tma_check();
 
 	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
@@ -259,6 +462,8 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 #endif /* CONSOLE_ENABLE */
 
 	layer_auto_off_record(record);
+
+	tma_process_record(keycode, record);
 
 	for (i = 0; i < NMTHDEFS; i++) {
 		p = &multi_tap_or_hold[i];
