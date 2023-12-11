@@ -221,6 +221,27 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
  * |                                  assist :--- mkc2 ---------------:
  */
 
+/***
+@startuml
+hide empty description
+
+[*] --> WAITING_MODIFIER_PRESS
+WAITING_MODIFIER_PRESS_OR_T2 -> WAITING_MODIFIER_PRESS : T2
+
+WAITING_MODIFIER_PRESS --> WAITING_MODIFIER_RELEASE_OR_T1 : press
+WAITING_MODIFIER_PRESS_OR_T2 --> WAITING_MODIFIER_RELEASE_OR_T1 : press (assist)
+
+WAITING_MODIFIER_RELEASE_OR_T1 -> WAITING_MODIFIER_RELEASE : T1
+
+WAITING_MODIFIER_RELEASE --> CLEAN_ASSIST_MODIFIRES  : release
+WAITING_MODIFIER_RELEASE_OR_T1 --> CLEAN_ASSIST_MODIFIERS_FOR_NEXT_PRESS : release
+
+WAITING_MODIFIER_PRESS_OR_T2 <-- CLEAN_ASSIST_MODIFIERS_FOR_NEXT_PRESS : (assist release)
+WAITING_MODIFIER_PRESS <-- CLEAN_ASSIST_MODIFIRES : (assist release)
+
+@enduml
+ ***/
+
 #define TMA_TIMER1	120
 #define TMA_TIMER2	700
 
@@ -235,10 +256,10 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 enum tapping_multi_modifier_assitant_state {
 	WAITING_MODIFIER_PRESS,
 	WAITING_MODIFIER_RELEASE_OR_T1,
-	CLEAN_FOR_NEXT_MODIFIER_PRESS,
+	CLEAN_ASSIST_MODIFIERS_FOR_NEXT_PRESS,
 	WAITING_MODIFIER_PRESS_OR_T2,
-	CLEAN_ASSIST_MODIFIRES,
 	WAITING_MODIFIER_RELEASE,
+	CLEAN_ASSIST_MODIFIRES,
 };
 
 static struct tapping_multi_modifier_assistant {
@@ -306,34 +327,21 @@ tma_assist_release(bool keep_assist)
 static void
 tma_check(void)
 {
-	int i;
-	struct tapping_multi_modifier_assistant_keys *p;
-
 	switch (tma.state) {
 	case WAITING_MODIFIER_RELEASE_OR_T1:
 		if (timer_elapsed(tma.timer) < TMA_TIMER1) return;
-		dprintf("WAITING_MODIFIER_RELEASE_OR_T1\n");
 		tma.state = WAITING_MODIFIER_RELEASE;
 		return;
-	case CLEAN_FOR_NEXT_MODIFIER_PRESS:
-		dprintf("CLEAN_FOR_NEXT_MODIFIER_PRESS\n");
+	case CLEAN_ASSIST_MODIFIERS_FOR_NEXT_PRESS:
 		tma_assist_release(true);
 		tma.state = WAITING_MODIFIER_PRESS_OR_T2;
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
 		if (timer_elapsed(tma.timer) < TMA_TIMER2) return;
-		dprintf("WAITING_MODIFIER_PRESS_OR_T2\n");
-		tma_assist_release(false);
 		tma.state = WAITING_MODIFIER_PRESS;
 		return;
 	case CLEAN_ASSIST_MODIFIRES:
 		tma_assist_release(false);
-		tma.state = WAITING_MODIFIER_RELEASE;
-		for (i = 0; i < NTMAKEYS; i++) {
-			p = &tmakey[i];
-			if (p->press) return;
-		}
-		dprintf("CLEAN_ASSIST_MODIFIRES\n");
 		tma.state = WAITING_MODIFIER_PRESS;
 		return;
 	default:
@@ -359,7 +367,6 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 	switch (tma.state) {
 	case WAITING_MODIFIER_PRESS:
 		if (!record->event.pressed) return;
-		dprintf("WAITING_MODIFIER_PRESS: %u\n", keycode);
 		tma.kc = keycode;
 		tma.timer = timer_read();
 		tma.state = WAITING_MODIFIER_RELEASE_OR_T1;
@@ -369,17 +376,15 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
-		dprintf("WAITING_MODIFIER_RELEASE_OR_T1: %u\n", keycode);
 		*k->assist = true;
 		tma.timer = timer_read();
-		tma.state = CLEAN_FOR_NEXT_MODIFIER_PRESS;
+		tma.state = CLEAN_ASSIST_MODIFIERS_FOR_NEXT_PRESS;
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
 		if (!record->event.pressed) {
 			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
-		dprintf("WAITING_MODIFIER_PRESS_OR_T2: %u\n", keycode);
 		tma_assist_press(keycode);
 		tma.kc = keycode;
 		tma.timer = timer_read();
@@ -390,8 +395,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 			p = &tmakey[i];
 			if (p->press) return;
 		}
-		dprintf("WAITING_MODIFIER_RELEASE\n");
-		tma.state = WAITING_MODIFIER_PRESS;
+		tma.state = CLEAN_ASSIST_MODIFIRES;
 		break;
 	default:
 		break;
