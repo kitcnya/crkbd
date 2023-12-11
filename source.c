@@ -312,14 +312,17 @@ tma_check(void)
 	switch (tma.state) {
 	case WAITING_MODIFIER_RELEASE_OR_T1:
 		if (timer_elapsed(tma.timer) < TMA_TIMER1) return;
+		dprintf("WAITING_MODIFIER_RELEASE_OR_T1\n");
 		tma.state = WAITING_MODIFIER_RELEASE;
 		return;
 	case CLEAN_FOR_NEXT_MODIFIER_PRESS:
+		dprintf("CLEAN_FOR_NEXT_MODIFIER_PRESS\n");
 		tma_assist_release(true);
 		tma.state = WAITING_MODIFIER_PRESS_OR_T2;
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
 		if (timer_elapsed(tma.timer) < TMA_TIMER2) return;
+		dprintf("WAITING_MODIFIER_PRESS_OR_T2\n");
 		tma_assist_release(false);
 		tma.state = WAITING_MODIFIER_PRESS;
 		return;
@@ -330,6 +333,7 @@ tma_check(void)
 			p = &tmakey[i];
 			if (p->press) return;
 		}
+		dprintf("CLEAN_ASSIST_MODIFIRES\n");
 		tma.state = WAITING_MODIFIER_PRESS;
 		return;
 	default:
@@ -355,6 +359,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 	switch (tma.state) {
 	case WAITING_MODIFIER_PRESS:
 		if (!record->event.pressed) return;
+		dprintf("WAITING_MODIFIER_PRESS: %u\n", keycode);
 		tma.kc = keycode;
 		tma.timer = timer_read();
 		tma.state = WAITING_MODIFIER_RELEASE_OR_T1;
@@ -364,6 +369,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
+		dprintf("WAITING_MODIFIER_RELEASE_OR_T1: %u\n", keycode);
 		*k->assist = true;
 		tma.timer = timer_read();
 		tma.state = CLEAN_FOR_NEXT_MODIFIER_PRESS;
@@ -373,6 +379,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 			tma.state = CLEAN_ASSIST_MODIFIRES;
 			return;
 		}
+		dprintf("WAITING_MODIFIER_PRESS_OR_T2: %u\n", keycode);
 		tma_assist_press(keycode);
 		tma.kc = keycode;
 		tma.timer = timer_read();
@@ -383,6 +390,7 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 			p = &tmakey[i];
 			if (p->press) return;
 		}
+		dprintf("WAITING_MODIFIER_RELEASE\n");
 		tma.state = WAITING_MODIFIER_PRESS;
 		break;
 	default:
