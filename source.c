@@ -338,6 +338,7 @@ tma_check(void)
 		return;
 	case WAITING_MODIFIER_PRESS_OR_T2:
 		if (timer_elapsed(tma.timer) < TMA_TIMER2) return;
+		tma_assist_release(false);
 		tma.state = WAITING_MODIFIER_PRESS;
 		return;
 	case CLEAN_ASSIST_MODIFIRES:
