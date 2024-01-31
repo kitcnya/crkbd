@@ -132,8 +132,8 @@ static struct multi_tap_or_hold_def {
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_state state;
 } multi_tap_or_hold[] = {
-	MTHDEF(KC_HELP , 2, 3, 2, 3),
-	MTHDEF(KC_AGAIN, 3, 3, 2, 3),
+	MTHDEF(KC_HELP, 2, 3, 2, 3),
+	MTHDEF(KC_AGIN, 3, 3, 2, 3),
 };
 
 #define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
