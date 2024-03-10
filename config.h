@@ -1,5 +1,11 @@
 /*
- * -*- coding: utf-8-unix -*-
+ * Copyright (C) 2023 kitcnya@outlook.com
+ * https://opensource.org/license/mit/
+ * SPDX-License-Identifier: MIT
  */
 
-#define TAPPING_TOGGLE 1
+#pragma once
+
+/* Multi Tap or Hold Layer Keys */
+#define ML2323	QK_USER_0
+#define ML3323	QK_USER_1
