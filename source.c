@@ -132,6 +132,7 @@ static struct multi_tap_or_hold_def {
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_state state;
 } multi_tap_or_hold[] = {
+	MTHDEF(ML2222, 2, 2, 2, 2),
 	MTHDEF(ML2323, 2, 3, 2, 3),
 	MTHDEF(ML3323, 3, 3, 2, 3),
 };

@@ -3,7 +3,7 @@
   "notes": "default map",
   "documentation": "\"This file is a QMK Configurator export. You can import this at <https://config.qmk.fm>. It can also be used directly with QMK's source code.\n\nTo setup your QMK environment check out the tutorial: <https://docs.qmk.fm/#/newbs>\n\nYou can convert this file to a keymap.c using this command: `qmk json2c {keymap}`\n\nYou can compile this keymap using this command: `qmk compile {keymap}`\"\n",
   "keyboard": "crkbd/rev1",
-  "keymap": "crkbd_rev1_kitcnya",
+  "keymap": "kitcnya",
   "layout": "LAYOUT_split_3x6_3",
   "layers": [
     [
@@ -31,7 +31,7 @@
       "KC_L",
       "KC_MINS",
       "KC_BSPC",
-      "TT(2)",
+      "ANY(ML2222)",
       "KC_Z",
       "KC_X",
       "KC_C",
@@ -119,7 +119,7 @@
       "KC_P6",
       "KC_PMNS",
       "KC_BSPC",
-      "KC_TRNS",
+      "TG(2)",
       "KC_F9",
       "KC_F10",
       "KC_F11",

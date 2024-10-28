@@ -7,5 +7,6 @@
 #pragma once
 
 /* Multi Tap or Hold Layer Keys */
-#define ML2323	QK_USER_0
-#define ML3323	QK_USER_1
+#define ML2222	QK_USER_0
+#define ML2323	QK_USER_1
+#define ML3323	QK_USER_2
