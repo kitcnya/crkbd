@@ -19,7 +19,7 @@
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 #ifndef LAYER_AUTO_OFF_LAYER
-#define LAYER_AUTO_OFF_LAYER	2	/* lowest layer number to manage */
+#define LAYER_AUTO_OFF_LAYER	3	/* lowest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER */
 
 static uint32_t layer_auto_off_action_timer = 0;
@@ -135,6 +135,7 @@ static struct multi_tap_or_hold_def {
 	MTHDEF(ML2222, 2, 2, 2, 2),
 	MTHDEF(ML2323, 2, 3, 2, 3),
 	MTHDEF(ML3323, 3, 3, 2, 3),
+	MTHDEF(ML3131, 3, 1, 3, 1),
 };
 
 #define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
