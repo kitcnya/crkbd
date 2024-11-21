@@ -53,6 +53,19 @@ layer_auto_off_record(keyrecord_t *record)
 	}
 }
 
+void
+housekeeping_task_lao(void)
+{
+	layer_auto_off_check();
+}
+
+bool
+process_record_lao(uint16_t keycode, keyrecord_t *record)
+{
+	layer_auto_off_record(record);
+	return true;
+}
+
 /*
  * Multi Tap or Hold layer selection
  * =================================
@@ -203,6 +216,35 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 		break;
 	}
 	p->state = WAITING_PRESS;
+}
+
+void
+housekeeping_task_mth(void)
+{
+	int i;
+	struct multi_tap_or_hold_def *p;
+
+	for (i = 0; i < NMTHDEFS; i++) {
+		p = &multi_tap_or_hold[i];
+		if (!p->pending) continue;
+		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
+		mth_timer_action(p);
+	}
+}
+
+bool
+process_record_mth(uint16_t keycode, keyrecord_t *record)
+{
+	int i;
+	struct multi_tap_or_hold_def *p;
+
+	for (i = 0; i < NMTHDEFS; i++) {
+		p = &multi_tap_or_hold[i];
+		if (keycode != p->kc) continue;
+		mth_process_record(p, record);
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -405,6 +447,37 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 	}
 }
 
+void
+housekeeping_task_tma(void)
+{
+	tma_check();
+}
+
+bool
+process_record_tma(uint16_t keycode, keyrecord_t *record)
+{
+	tma_process_record(keycode, record);
+	return true;
+}
+
+/*
+ * Keycode Reporter
+ */
+
+bool
+process_record_kcr(uint16_t keycode, keyrecord_t *record)
+{
+#ifdef CONSOLE_ENABLE
+	if (debug_enable) {
+		uprintf("%05u %04X %02u %02u %u\n",
+			record->event.time, keycode,
+			record->event.key.col, record->event.key.row,
+			record->event.pressed);
+	}
+#endif /* CONSOLE_ENABLE */
+	return true;
+}
+
 /*
  * System Interfaces
  */
@@ -445,44 +518,34 @@ oled_task_user(void)
 void
 housekeeping_task_user(void)
 {
-	int i;
-	struct multi_tap_or_hold_def *p;
-
-	layer_auto_off_check();
-
-	tma_check();
-
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
-		if (!p->pending) continue;
-		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
-		mth_timer_action(p);
-	}
+#if defined(LAO_ENABLE)
+	housekeeping_task_lao();
+#endif
+#if defined(TMA_ENABLE)
+	housekeeping_task_tma();
+#endif
+#if defined(MTH_ENABLE)
+	housekeeping_task_mth();
+#endif
 }
 
 bool
 process_record_user(uint16_t keycode, keyrecord_t *record)
 {
-	int i;
-	struct multi_tap_or_hold_def *p;
-
-#ifdef CONSOLE_ENABLE
-	if (debug_enable) {
-		uprintf("%05u %04X %02u %02u %u\n",
-			record->event.time, keycode,
-			record->event.key.col, record->event.key.row,
-			record->event.pressed);
-	}
-#endif /* CONSOLE_ENABLE */
-
-	layer_auto_off_record(record);
-
-	tma_process_record(keycode, record);
-
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
-		if (keycode != p->kc) continue;
-		mth_process_record(p, record);
+	if (!(
+#if defined(KCR_ENABLE)
+		    process_record_kcr(keycode, record) &&
+#endif
+#if defined(LAO_ENABLE)
+		    process_record_lao(keycode, record) &&
+#endif
+#if defined(TMA_ENABLE)
+		    process_record_tma(keycode, record) &&
+#endif
+#if defined(MTH_ENABLE)
+		    process_record_mth(keycode, record) &&
+#endif
+		    true)) {
 		return false;
 	}
 	return true;
