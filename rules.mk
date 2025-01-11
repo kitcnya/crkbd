@@ -1,8 +1,7 @@
-CONSOLE_ENABLE = yes
-
-KCR_ENABLE = yes
+#CONSOLE_ENABLE = yes
+#KCR_ENABLE = yes
 LAO_ENABLE = yes
-TMA_ENABLE = yes
+#TMA_ENABLE = yes
 MTH_ENABLE = yes
 
 SRC += source.c
