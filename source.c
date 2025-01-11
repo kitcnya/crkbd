@@ -10,6 +10,8 @@
 #include "print.h"
 #endif
 
+#ifdef LAO_ENABLE
+
 /*
  * Higher Layer Auto Off Timer
  */
@@ -19,10 +21,10 @@
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 #ifndef LAYER_AUTO_OFF_LAYER_LO
-#define LAYER_AUTO_OFF_LAYER_LO	2	/* lowest layer number to manage */
+#define LAYER_AUTO_OFF_LAYER_LO	16	/* lowest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER_LO */
 #ifndef LAYER_AUTO_OFF_LAYER_HI
-#define LAYER_AUTO_OFF_LAYER_HI	2	/* highest layer number to manage */
+#define LAYER_AUTO_OFF_LAYER_HI	16	/* highest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER_HI */
 
 static uint32_t layer_auto_off_action_timer = 0;
@@ -56,6 +58,23 @@ layer_auto_off_record(keyrecord_t *record)
 		layer_auto_off_nkeypressed--;
 	}
 }
+
+void
+housekeeping_task_lao(void)
+{
+	layer_auto_off_check();
+}
+
+bool
+process_record_lao(uint16_t keycode, keyrecord_t *record)
+{
+	layer_auto_off_record(record);
+	return true;
+}
+
+#endif /* LAO_ENABLE */
+
+#ifdef MTH_ENABLE
 
 /*
  * Multi Tap or Hold layer selection
@@ -116,6 +135,7 @@ layer_auto_off_record(keyrecord_t *record)
 		.pending = false,					\
 		.state = WAITING_PRESS,					\
 	}
+#define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
 
 enum multi_tap_or_hold_state {
 	WAITING_PRESS,
@@ -126,7 +146,7 @@ enum multi_tap_or_hold_state {
 	WAITING_RELEASE_FOR_L2,
 };
 
-static struct multi_tap_or_hold_def {
+struct multi_tap_or_hold_def {
 	uint16_t kc;			/* keycode to sense */
 	uint8_t layer1;			/* first prefered layer number */
 	uint8_t layer2;			/* second prefered layer number */
@@ -135,7 +155,9 @@ static struct multi_tap_or_hold_def {
 	uint16_t timer;			/* timer for measuring interval */
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_state state;
-} multi_tap_or_hold[] = {
+};
+
+static struct multi_tap_or_hold_def multi_tap_or_hold[] = {
 //	MTHDEF(ML2222, 2, 2, 2, 2),
 	MTHDEF(ML2323, 2, 3, 2, 3),
 //	MTHDEF(ML3323, 3, 3, 2, 3),
@@ -143,8 +165,6 @@ static struct multi_tap_or_hold_def {
 //	MTHDEF(ML4242, 4, 2, 4, 2),
 //	MTHDEF(ML5252, 5, 2, 5, 2),
 };
-
-#define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
 
 static void
 mth_timer_action(struct multi_tap_or_hold_def *p)
@@ -210,6 +230,39 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 	}
 	p->state = WAITING_PRESS;
 }
+
+void
+housekeeping_task_mth(void)
+{
+	int i;
+	struct multi_tap_or_hold_def *p;
+
+	for (i = 0; i < NMTHDEFS; i++) {
+		p = &multi_tap_or_hold[i];
+		if (!p->pending) continue;
+		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
+		mth_timer_action(p);
+	}
+}
+
+bool
+process_record_mth(uint16_t keycode, keyrecord_t *record)
+{
+	int i;
+	struct multi_tap_or_hold_def *p;
+
+	for (i = 0; i < NMTHDEFS; i++) {
+		p = &multi_tap_or_hold[i];
+		if (keycode != p->kc) continue;
+		mth_process_record(p, record);
+		return false;
+	}
+	return true;
+}
+
+#endif /* MTH_ENABLE */
+
+#ifdef TMA_ENABLE
 
 /*
  * Tapping Multi-modifier Assistant
@@ -288,8 +341,11 @@ static struct tapping_multi_modifier_assistant_keys {
 	bool *assist;			/* use for assist */
 } tmakey[] = {
 	TMADEF(KC_LALT, &tma.alt),
+	TMADEF(KC_RALT, &tma.alt),
 	TMADEF(KC_LCTL, &tma.ctrl),
+	TMADEF(KC_RCTL, &tma.ctrl),
 	TMADEF(KC_LSFT, &tma.shift),
+	TMADEF(KC_RSFT, &tma.shift),
 };
 
 #define NTMAKEYS (sizeof(tmakey) / sizeof(struct tapping_multi_modifier_assistant_keys))
@@ -411,8 +467,85 @@ tma_process_record(uint16_t keycode, keyrecord_t *record)
 	}
 }
 
+void
+housekeeping_task_tma(void)
+{
+	tma_check();
+}
+
+bool
+process_record_tma(uint16_t keycode, keyrecord_t *record)
+{
+	tma_process_record(keycode, record);
+	return true;
+}
+
+#endif /* TMA_ENABLE */
+
+#ifdef KCR_ENABLE
+
+/*
+ * Keycode Reporter
+ */
+
+bool
+process_record_kcr(uint16_t keycode, keyrecord_t *record)
+{
+#ifdef CONSOLE_ENABLE
+	if (debug_enable) {
+		uprintf("%05u %04X %02u %02u %u\n",
+			record->event.time, keycode,
+			record->event.key.col, record->event.key.row,
+			record->event.pressed);
+	}
+#endif /* CONSOLE_ENABLE */
+	return true;
+}
+
+#endif /* KCR_ENABLE */
+
 /*
  * System Interfaces
+ */
+
+void
+housekeeping_task_user(void)
+{
+#if defined(LAO_ENABLE)
+	housekeeping_task_lao();
+#endif
+#if defined(TMA_ENABLE)
+	housekeeping_task_tma();
+#endif
+#if defined(MTH_ENABLE)
+	housekeeping_task_mth();
+#endif
+}
+
+bool
+process_record_user(uint16_t keycode, keyrecord_t *record)
+{
+	if (!(
+#if defined(KCR_ENABLE)
+		    process_record_kcr(keycode, record) &&
+#endif
+#if defined(LAO_ENABLE)
+		    process_record_lao(keycode, record) &&
+#endif
+#if defined(TMA_ENABLE)
+		    process_record_tma(keycode, record) &&
+#endif
+#if defined(MTH_ENABLE)
+		    process_record_mth(keycode, record) &&
+#endif
+		    true)) {
+		return false;
+	}
+	return true;
+}
+
+/*
+ * Customizations
  */
 
 bool
@@ -422,15 +555,18 @@ oled_task_user(void)
 	bool invert;
 
 	if (!is_keyboard_master()) return true;
+#ifdef LAO_ENABLE
 	top = get_highest_layer(layer_state);
 	invert = !(top < LAYER_AUTO_OFF_LAYER_LO) && !(top > LAYER_AUTO_OFF_LAYER_HI);
 	oled_invert(invert);
+#endif /* LAO_ENABLE */
 	if (debug_enable) {
 		oled_write_P(PSTR("DEBUG "), false);
 	}
 	if (keymap_config.swap_control_capslock) {
 		oled_write_P(PSTR("SWAP "), false);
 	}
+#ifdef TMA_ENABLE
 	if (tma.alt || tma.ctrl || tma.shift) {
 		oled_write_P(PSTR("TMA-"), false);
 		if (tma.alt) {
@@ -444,52 +580,7 @@ oled_task_user(void)
 		}
 		oled_write_P(PSTR(" "), false);
 	}
+#endif /* TMA_ENABLE */
 	oled_write_ln_P(PSTR(""), false);
-	return true;
-}
-
-void
-housekeeping_task_user(void)
-{
-	int i;
-	struct multi_tap_or_hold_def *p;
-
-	layer_auto_off_check();
-
-	tma_check();
-
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
-		if (!p->pending) continue;
-		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
-		mth_timer_action(p);
-	}
-}
-
-bool
-process_record_user(uint16_t keycode, keyrecord_t *record)
-{
-	int i;
-	struct multi_tap_or_hold_def *p;
-
-#ifdef CONSOLE_ENABLE
-	if (debug_enable) {
-		uprintf("%05u %04X %02u %02u %u\n",
-			record->event.time, keycode,
-			record->event.key.col, record->event.key.row,
-			record->event.pressed);
-	}
-#endif /* CONSOLE_ENABLE */
-
-	layer_auto_off_record(record);
-
-	tma_process_record(keycode, record);
-
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
-		if (keycode != p->kc) continue;
-		mth_process_record(p, record);
-		return false;
-	}
 	return true;
 }
