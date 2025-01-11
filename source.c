@@ -551,34 +551,42 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 bool
 oled_task_user(void)
 {
-	uint8_t top;
-	bool invert;
+	uint8_t layer;
 
 	if (!is_keyboard_master()) return true;
+
+	oled_write_P(PSTR("L:"), false);
+	for (layer = 0; layer < 10; layer++) {
+		if (IS_LAYER_ON(layer)) {
 #ifdef LAO_ENABLE
-	top = get_highest_layer(layer_state);
-	invert = !(top < LAYER_AUTO_OFF_LAYER_LO) && !(top > LAYER_AUTO_OFF_LAYER_HI);
-	oled_invert(invert);
+			if (layer < LAYER_AUTO_OFF_LAYER_LO || layer > LAYER_AUTO_OFF_LAYER_HI) {
+				oled_write_char(layer + '0', false);
+			} else {
+				oled_write_char(layer + '0', true);
+			}
+#else
+			oled_write_char(layer + '0', false);
 #endif /* LAO_ENABLE */
-	if (debug_enable) {
-		oled_write_P(PSTR("DEBUG "), false);
-	}
-	if (keymap_config.swap_control_capslock) {
-		oled_write_P(PSTR("SWAP "), false);
+		} else {
+			oled_write_char(' ', false);
+		}
 	}
 #ifdef TMA_ENABLE
-	if (tma.alt || tma.ctrl || tma.shift) {
-		oled_write_P(PSTR("TMA-"), false);
-		if (tma.alt) {
-			oled_write_P(PSTR("A"), false);
-		}
-		if (tma.ctrl) {
-			oled_write_P(PSTR("C"), false);
-		}
-		if (tma.shift) {
-			oled_write_P(PSTR("S"), false);
-		}
-		oled_write_P(PSTR(" "), false);
+	oled_advance_char();
+	if (tma.alt) {
+		oled_write_char('A', false);
+	} else {
+		oled_write_char(' ', false);
+	}
+	if (tma.ctrl) {
+		oled_write_char('C', false);
+	} else {
+		oled_write_char(' ', false);
+	}
+	if (tma.shift) {
+		oled_write_char('S', false);
+	} else {
+		oled_write_char(' ', false);
 	}
 #endif /* TMA_ENABLE */
 	oled_write_ln_P(PSTR(""), false);
