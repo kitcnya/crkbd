@@ -18,9 +18,12 @@
 #define LAYER_AUTO_OFF_TIMEOUT	10000
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
-#ifndef LAYER_AUTO_OFF_LAYER
-#define LAYER_AUTO_OFF_LAYER	3	/* lowest layer number to manage */
-#endif /* LAYER_AUTO_OFF_LAYER */
+#ifndef LAYER_AUTO_OFF_LAYER_LO
+#define LAYER_AUTO_OFF_LAYER_LO	2	/* lowest layer number to manage */
+#endif /* LAYER_AUTO_OFF_LAYER_LO */
+#ifndef LAYER_AUTO_OFF_LAYER_HI
+#define LAYER_AUTO_OFF_LAYER_HI	2	/* highest layer number to manage */
+#endif /* LAYER_AUTO_OFF_LAYER_HI */
 
 static uint32_t layer_auto_off_action_timer = 0;
 static uint16_t layer_auto_off_nkeypressed = 0;
@@ -38,7 +41,8 @@ layer_auto_off_check(void)
 		return;
 	}
 	top = get_highest_layer(layer_state);
-	if (top < LAYER_AUTO_OFF_LAYER) return;
+	if (top < LAYER_AUTO_OFF_LAYER_LO) return;
+	if (top > LAYER_AUTO_OFF_LAYER_HI) return;
 	layer_off(top);
 }
 
@@ -145,10 +149,12 @@ static struct multi_tap_or_hold_def {
 	bool pending;			/* timer pending action exists */
 	enum multi_tap_or_hold_state state;
 } multi_tap_or_hold[] = {
-	MTHDEF(ML2222, 2, 2, 2, 2),
+//	MTHDEF(ML2222, 2, 2, 2, 2),
 	MTHDEF(ML2323, 2, 3, 2, 3),
-	MTHDEF(ML3323, 3, 3, 2, 3),
-	MTHDEF(ML3131, 3, 1, 3, 1),
+//	MTHDEF(ML3323, 3, 3, 2, 3),
+//	MTHDEF(ML3131, 3, 1, 3, 1),
+//	MTHDEF(ML4242, 4, 2, 4, 2),
+//	MTHDEF(ML5252, 5, 2, 5, 2),
 };
 
 #define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
@@ -490,7 +496,7 @@ oled_task_user(void)
 
 	if (!is_keyboard_master()) return true;
 	top = get_highest_layer(layer_state);
-	invert = !(top < LAYER_AUTO_OFF_LAYER);
+	invert = !(top < LAYER_AUTO_OFF_LAYER_LO) && !(top > LAYER_AUTO_OFF_LAYER_HI);
 	oled_invert(invert);
 	if (debug_enable) {
 		oled_write_P(PSTR("DEBUG "), false);
