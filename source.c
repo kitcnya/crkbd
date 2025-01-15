@@ -33,7 +33,7 @@ static uint16_t layer_auto_off_nkeypressed = 0;
 static void
 layer_auto_off_check(void)
 {
-	uint8_t top;
+	uint8_t layer;
 
 	if (timer_elapsed32(layer_auto_off_action_timer) < LAYER_AUTO_OFF_TIMEOUT) return;
 	layer_auto_off_action_timer = timer_read32();
@@ -42,10 +42,9 @@ layer_auto_off_check(void)
 		layer_auto_off_nkeypressed--;
 		return;
 	}
-	top = get_highest_layer(layer_state);
-	if (top < LAYER_AUTO_OFF_LAYER_LO) return;
-	if (top > LAYER_AUTO_OFF_LAYER_HI) return;
-	layer_off(top);
+	for (layer = LAYER_AUTO_OFF_LAYER_LO; layer <= LAYER_AUTO_OFF_LAYER_HI; layer++) {
+		layer_off(layer);
+	}
 }
 
 static void
