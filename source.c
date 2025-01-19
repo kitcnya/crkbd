@@ -305,7 +305,7 @@ process_record_mth(uint16_t keycode, keyrecord_t *record)
  */
 
 /***
-@startuml
+@startuml tapping-multi-modifier-assistant.png
 hide empty description
 
 [*] --> WAITING_MODIFIER_PRESS
