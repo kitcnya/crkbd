@@ -120,13 +120,18 @@ process_record_lao(uint16_t keycode, keyrecord_t *record)
  * |        |      |   |== kc ==|      |
  * |        |      |   |    |   |== TG(L2) == toggle layer L2
  * +--------+------+---+----+---+------+-----------------
+ *
+ * Key code extension:
+ * momentary action (i.e. MO()) can be replaced by normal key press and release action.
  */
 
 #define MTH_TIMER	190
 
-#define MTHDEF(pkc, n1, n2, t1, t2)					\
+#define MTHDEF(pkc, k1, k2, n1, n2, t1, t2)				\
 	{								\
 		.kc = (pkc),						\
+		.kc1 = (k1),						\
+		.kc2 = (k2),						\
 		.layer1 = (n1),						\
 		.layer2 = (n2),						\
 		.toggle1 = (t1),					\
@@ -147,8 +152,10 @@ enum multi_tap_or_hold_state {
 
 struct multi_tap_or_hold_def {
 	uint16_t kc;			/* keycode to sense */
-	uint8_t layer1;			/* first prefered layer number */
-	uint8_t layer2;			/* second prefered layer number */
+	uint8_t kc1;			/* first preferred keycode (instead of changing layer) */
+	uint8_t kc2;			/* second preferred keycode (instead of changing layer) */
+	uint8_t layer1;			/* first preferred layer number */
+	uint8_t layer2;			/* second preferred layer number */
 	uint8_t toggle1;		/* toggle layer by single tapping */
 	uint8_t toggle2;		/* toggle layer by double tapping */
 	uint16_t timer;			/* timer for measuring interval */
@@ -157,12 +164,8 @@ struct multi_tap_or_hold_def {
 };
 
 static struct multi_tap_or_hold_def multi_tap_or_hold[] = {
-//	MTHDEF(ML2222, 2, 2, 2, 2),
-	MTHDEF(ML2323, 2, 3, 2, 3),
-//	MTHDEF(ML3323, 3, 3, 2, 3),
-//	MTHDEF(ML3131, 3, 1, 3, 1),
-//	MTHDEF(ML4242, 4, 2, 4, 2),
-//	MTHDEF(ML5252, 5, 2, 5, 2),
+	MTHDEF(ML2323, KC_NO, KC_NO, 2, 3, 2, 3),
+	MTHDEF(MLAA66, KC_LALT, KC_LALT, 0, 0, 6, 6),
 };
 
 static void
@@ -171,8 +174,14 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 	p->pending = false;
 	switch (p->state) {
 	case WAITING_RELEASE_OR_T1:
-		/* momentary layer 1 */
-		layer_on(p->layer1);
+		/* first hold action */
+		if (p->kc1 == KC_NO) {
+			/* momentary layer 1 */
+			layer_on(p->layer1);
+		} else {
+			/* press keycode 1 */
+			register_code(p->kc1);
+		}
 		p->state = WAITING_RELEASE_FOR_L1;
 		return;
 	case WAITING_PRESS_OR_T2:
@@ -180,8 +189,14 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 		layer_invert(p->toggle1);
 		break;
 	case WAITING_RELEASE_OR_T3:
-		/* momentary layer 2 */
-		layer_on(p->layer2);
+		/* second hold action */
+		if (p->kc2 == KC_NO) {
+			/* momentary layer 2 */
+			layer_on(p->layer2);
+		} else {
+			/* press keycode 2 */
+			register_code(p->kc2);
+		}
 		p->state = WAITING_RELEASE_FOR_L2;
 		return;
 	default:
@@ -219,10 +234,18 @@ mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
 		layer_invert(p->toggle2);
 		break;
 	case WAITING_RELEASE_FOR_L1:
-		layer_off(p->layer1);
+		if (p->kc1 == KC_NO) {
+			layer_off(p->layer1);
+		} else {
+			unregister_code(p->kc1);
+		}
 		break;
 	case WAITING_RELEASE_FOR_L2:
-		layer_off(p->layer2);
+		if (p->kc2 == KC_NO) {
+			layer_off(p->layer2);
+		} else {
+			unregister_code(p->kc2);
+		}
 		break;
 	default:
 		break;
