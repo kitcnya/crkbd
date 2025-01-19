@@ -21,10 +21,10 @@
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
 #ifndef LAYER_AUTO_OFF_LAYER_LO
-#define LAYER_AUTO_OFF_LAYER_LO	16	/* lowest layer number to manage */
+#define LAYER_AUTO_OFF_LAYER_LO	MAX_LAYER	/* lowest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER_LO */
 #ifndef LAYER_AUTO_OFF_LAYER_HI
-#define LAYER_AUTO_OFF_LAYER_HI	16	/* highest layer number to manage */
+#define LAYER_AUTO_OFF_LAYER_HI	MAX_LAYER	/* highest layer number to manage */
 #endif /* LAYER_AUTO_OFF_LAYER_HI */
 
 static uint32_t layer_auto_off_action_timer = 0;
