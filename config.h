@@ -11,5 +11,5 @@
 #define LAYER_AUTO_OFF_LAYER_HI	2
 
 /* Multi Tap or Hold Layer Keys */
-#define ML2323	QK_USER_0
-#define MLAA66	QK_USER_1
+#define ML2X2X	QK_USER_0
+#define MLAA36	QK_USER_1
