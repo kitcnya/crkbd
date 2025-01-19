@@ -279,6 +279,12 @@ process_record_mth(uint16_t keycode, keyrecord_t *record)
 		mth_process_record(p, record);
 		return false;
 	}
+	/* other key events cause expiration of pending timer */
+	for (i = 0; i < NMTHDEFS; i++) {
+		p = &multi_tap_or_hold[i];
+		if (!p->pending) continue;
+		mth_timer_action(p);
+	}
 	return true;
 }
 
