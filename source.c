@@ -195,9 +195,8 @@ struct multi_tap_or_hold_def {
 
 static struct multi_tap_or_hold_def multi_tap_or_hold[] = {
 	MTHDEF(ML2X2X, KC_NO, KC_NO, 2, 2, 2, 2),
-	MTHDEF(MLAA36, KC_LALT, KC_LALT, 0, 0, 3, 6),
-	MTHDEF(ML5533, KC_NO, KC_NO, 5, 5, 3, 3),
-	MTHDEF(ML9978, KC_NO, KC_NO, 9, 9, 7, 8),
+	MTHDEF(MLAA35, KC_LALT, KC_LALT, 0, 0, 3, 5),
+	MTHDEF(ML9867, KC_NO, KC_NO, 9, 8, 6, 7),
 };
 
 static void
@@ -613,10 +612,10 @@ keyboard_post_init_user(void)
 {
 #ifdef LAO_ENABLE
 	layer_stat_lao[2].enable = 1;
+	layer_stat_lao[6].enable = 1;
 	layer_stat_lao[7].enable = 1;
-	layer_stat_lao[8].enable = 1;
+	layer_stat_lao[6].immediate = 1;
 	layer_stat_lao[7].immediate = 1;
-	layer_stat_lao[8].immediate = 1;
 #endif /* LAO_ENABLE */
 }
 
