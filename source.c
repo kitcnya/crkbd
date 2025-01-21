@@ -13,36 +13,52 @@
 #ifdef LAO_ENABLE
 
 /*
- * Higher Layer Auto Off Timer
+ * Layer Auto Off Timer
  */
 
 #ifndef LAYER_AUTO_OFF_TIMEOUT
 #define LAYER_AUTO_OFF_TIMEOUT	10000
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
-#ifndef LAYER_AUTO_OFF_LAYER_LO
-#define LAYER_AUTO_OFF_LAYER_LO	MAX_LAYER	/* lowest layer number to manage */
-#endif /* LAYER_AUTO_OFF_LAYER_LO */
-#ifndef LAYER_AUTO_OFF_LAYER_HI
-#define LAYER_AUTO_OFF_LAYER_HI	MAX_LAYER	/* highest layer number to manage */
-#endif /* LAYER_AUTO_OFF_LAYER_HI */
+struct layer_auto_off_stat {
+	/* settings */
+	uint8_t enable:1;		/* managed layer */
+	uint8_t immediate:1;		/* period expired immediately or extensible on keying */
+	/* status */
+	uint8_t previous:1;		/* previous layer state (on/off) */
+	uint8_t ongoing:1;		/* timer is on going */
+	uint32_t timer;			/* timer count */
+};
 
-static uint32_t layer_auto_off_action_timer = 0;
-static uint16_t layer_auto_off_nkeypressed = 0;
+struct layer_auto_off_stat layer_stat_lao[MAX_LAYER] = {};
 
 static void
 layer_auto_off_check(void)
 {
 	uint8_t layer;
 
-	if (timer_elapsed32(layer_auto_off_action_timer) < LAYER_AUTO_OFF_TIMEOUT) return;
-	layer_auto_off_action_timer = timer_read32();
-	/* timer expired */
-	if (layer_auto_off_nkeypressed > 0) {
-		layer_auto_off_nkeypressed--;
-		return;
-	}
-	for (layer = LAYER_AUTO_OFF_LAYER_LO; layer <= LAYER_AUTO_OFF_LAYER_HI; layer++) {
+	for (layer = 0; layer < MAX_LAYER; layer++) {
+		if (!layer_stat_lao[layer].enable) continue;
+		if (!IS_LAYER_ON(layer)) {
+			if (!layer_stat_lao[layer].previous) continue;
+			/* layer off by other feature */
+			layer_stat_lao[layer].previous = 0;
+			layer_stat_lao[layer].ongoing = 0;
+			continue;
+		}
+		if (!layer_stat_lao[layer].previous) {
+			/* start watching */
+			layer_stat_lao[layer].previous = 1;
+			layer_stat_lao[layer].ongoing = 1;
+			layer_stat_lao[layer].timer = timer_read32();
+			continue;
+		}
+		/* watching state */
+		if (layer_stat_lao[layer].ongoing) {
+			if (timer_elapsed32(layer_stat_lao[layer].timer) < LAYER_AUTO_OFF_TIMEOUT) continue;
+			/* timer expired */
+			layer_stat_lao[layer].ongoing = 0;
+		}
 		layer_off(layer);
 	}
 }
@@ -50,11 +66,25 @@ layer_auto_off_check(void)
 static void
 layer_auto_off_record(keyrecord_t *record)
 {
-	layer_auto_off_action_timer = timer_read32();
+	uint8_t layer;
+
 	if (record->event.pressed) {
-		layer_auto_off_nkeypressed++;
-	} else if (layer_auto_off_nkeypressed > 0) {
-		layer_auto_off_nkeypressed--;
+		/* timer extension only */
+		for (layer = 0; layer < MAX_LAYER; layer++) {
+			if (!layer_stat_lao[layer].enable) continue;
+			if (layer_stat_lao[layer].immediate) continue;
+			if (!layer_stat_lao[layer].ongoing) continue;
+			layer_stat_lao[layer].timer = timer_read32();
+		}
+	} else {
+		for (layer = 0; layer < MAX_LAYER; layer++) {
+			if (!layer_stat_lao[layer].enable) continue;
+			if (layer_stat_lao[layer].immediate) {
+				layer_stat_lao[layer].ongoing = 0;
+			} else if (layer_stat_lao[layer].ongoing) {
+				layer_stat_lao[layer].timer = timer_read32();
+			}
+		}
 	}
 }
 
@@ -578,6 +608,18 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
  * Customizations
  */
 
+void
+keyboard_post_init_user(void)
+{
+#ifdef LAO_ENABLE
+	layer_stat_lao[2].enable = 1;
+	layer_stat_lao[7].enable = 1;
+	layer_stat_lao[8].enable = 1;
+	layer_stat_lao[7].immediate = 1;
+	layer_stat_lao[8].immediate = 1;
+#endif /* LAO_ENABLE */
+}
+
 bool
 oled_task_user(void)
 {
@@ -589,10 +631,10 @@ oled_task_user(void)
 	for (layer = 0; layer < 10; layer++) {
 		if (IS_LAYER_ON(layer)) {
 #ifdef LAO_ENABLE
-			if (layer < LAYER_AUTO_OFF_LAYER_LO || layer > LAYER_AUTO_OFF_LAYER_HI) {
-				oled_write_char(layer + '0', false);
-			} else {
+			if (layer_stat_lao[layer].enable) {
 				oled_write_char(layer + '0', true);
+			} else {
+				oled_write_char(layer + '0', false);
 			}
 #else
 			oled_write_char(layer + '0', false);
