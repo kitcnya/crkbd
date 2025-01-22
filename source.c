@@ -194,8 +194,8 @@ struct multi_tap_or_hold_def {
 };
 
 static struct multi_tap_or_hold_def multi_tap_or_hold[] = {
-	MTHDEF(ML2X2X, KC_NO, KC_NO, 2, 2, 2, 2),
-	MTHDEF(MLAA35, KC_LALT, KC_LALT, 0, 0, 3, 5),
+	MTHDEF(ML2X2X, KC_NO, KC_NO, 2, 2, 2, 3),
+	MTHDEF(MLAAXX, KC_LALT, KC_LALT, 0, 0, 5, 5),
 	MTHDEF(ML9867, KC_NO, KC_NO, 9, 8, 6, 7),
 };
 
