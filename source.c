@@ -20,7 +20,7 @@
 #define LAYER_AUTO_OFF_TIMEOUT	10000
 #endif /* LAYER_AUTO_OFF_TIMEOUT */
 
-struct layer_auto_off_stat {
+struct layer_auto_off_control_st {
 	/* settings */
 	uint8_t enable:1;		/* managed layer */
 	uint8_t immediate:1;		/* period expired immediately or extensible on keying */
@@ -30,7 +30,7 @@ struct layer_auto_off_stat {
 	uint32_t timer;			/* timer count */
 };
 
-struct layer_auto_off_stat layer_stat_lao[MAX_LAYER] = {};
+struct layer_auto_off_control_st layer_auto_off_reg[MAX_LAYER] = {};
 
 static void
 layer_auto_off_check(void)
@@ -38,26 +38,26 @@ layer_auto_off_check(void)
 	uint8_t layer;
 
 	for (layer = 0; layer < MAX_LAYER; layer++) {
-		if (!layer_stat_lao[layer].enable) continue;
+		if (!layer_auto_off_reg[layer].enable) continue;
 		if (!IS_LAYER_ON(layer)) {
-			if (!layer_stat_lao[layer].previous) continue;
+			if (!layer_auto_off_reg[layer].previous) continue;
 			/* layer off by other feature */
-			layer_stat_lao[layer].previous = 0;
-			layer_stat_lao[layer].ongoing = 0;
+			layer_auto_off_reg[layer].previous = 0;
+			layer_auto_off_reg[layer].ongoing = 0;
 			continue;
 		}
-		if (!layer_stat_lao[layer].previous) {
+		if (!layer_auto_off_reg[layer].previous) {
 			/* start watching */
-			layer_stat_lao[layer].previous = 1;
-			layer_stat_lao[layer].ongoing = 1;
-			layer_stat_lao[layer].timer = timer_read32();
+			layer_auto_off_reg[layer].previous = 1;
+			layer_auto_off_reg[layer].ongoing = 1;
+			layer_auto_off_reg[layer].timer = timer_read32();
 			continue;
 		}
 		/* watching state */
-		if (layer_stat_lao[layer].ongoing) {
-			if (timer_elapsed32(layer_stat_lao[layer].timer) < LAYER_AUTO_OFF_TIMEOUT) continue;
+		if (layer_auto_off_reg[layer].ongoing) {
+			if (timer_elapsed32(layer_auto_off_reg[layer].timer) < LAYER_AUTO_OFF_TIMEOUT) continue;
 			/* timer expired */
-			layer_stat_lao[layer].ongoing = 0;
+			layer_auto_off_reg[layer].ongoing = 0;
 		}
 		layer_off(layer);
 	}
@@ -71,18 +71,18 @@ layer_auto_off_record(keyrecord_t *record)
 	if (record->event.pressed) {
 		/* timer extension only */
 		for (layer = 0; layer < MAX_LAYER; layer++) {
-			if (!layer_stat_lao[layer].enable) continue;
-			if (layer_stat_lao[layer].immediate) continue;
-			if (!layer_stat_lao[layer].ongoing) continue;
-			layer_stat_lao[layer].timer = timer_read32();
+			if (!layer_auto_off_reg[layer].enable) continue;
+			if (layer_auto_off_reg[layer].immediate) continue;
+			if (!layer_auto_off_reg[layer].ongoing) continue;
+			layer_auto_off_reg[layer].timer = timer_read32();
 		}
 	} else {
 		for (layer = 0; layer < MAX_LAYER; layer++) {
-			if (!layer_stat_lao[layer].enable) continue;
-			if (layer_stat_lao[layer].immediate) {
-				layer_stat_lao[layer].ongoing = 0;
-			} else if (layer_stat_lao[layer].ongoing) {
-				layer_stat_lao[layer].timer = timer_read32();
+			if (!layer_auto_off_reg[layer].enable) continue;
+			if (layer_auto_off_reg[layer].immediate) {
+				layer_auto_off_reg[layer].ongoing = 0;
+			} else if (layer_auto_off_reg[layer].ongoing) {
+				layer_auto_off_reg[layer].timer = timer_read32();
 			}
 		}
 	}
@@ -611,11 +611,11 @@ void
 keyboard_post_init_user(void)
 {
 #ifdef LAO_ENABLE
-	layer_stat_lao[2].enable = 1;
-	layer_stat_lao[6].enable = 1;
-	layer_stat_lao[7].enable = 1;
-	layer_stat_lao[6].immediate = 1;
-	layer_stat_lao[7].immediate = 1;
+	layer_auto_off_reg[2].enable = 1;
+	layer_auto_off_reg[6].enable = 1;
+	layer_auto_off_reg[7].enable = 1;
+	layer_auto_off_reg[6].immediate = 1;
+	layer_auto_off_reg[7].immediate = 1;
 #endif /* LAO_ENABLE */
 }
 
@@ -630,7 +630,7 @@ oled_task_user(void)
 	for (layer = 0; layer < 10; layer++) {
 		if (IS_LAYER_ON(layer)) {
 #ifdef LAO_ENABLE
-			if (layer_stat_lao[layer].enable) {
+			if (layer_auto_off_reg[layer].enable) {
 				oled_write_char(layer + '0', true);
 			} else {
 				oled_write_char(layer + '0', false);
