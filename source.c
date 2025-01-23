@@ -155,23 +155,15 @@ process_record_lao(uint16_t keycode, keyrecord_t *record)
  * momentary action (i.e. MO()) can be replaced by normal key press and release action.
  */
 
-#define MTH_TIMER	190
+#ifndef MAX_MTH_REG
+#define MAX_MTH_REG	4
+#endif /* MAX_MTH_REG */
 
-#define MTHDEF(pkc, k1, k2, n1, n2, t1, t2)				\
-	{								\
-		.kc = (pkc),						\
-		.kc1 = (k1),						\
-		.kc2 = (k2),						\
-		.layer1 = (n1),						\
-		.layer2 = (n2),						\
-		.toggle1 = (t1),					\
-		.toggle2 = (t2),					\
-		.pending = false,					\
-		.state = WAITING_PRESS,					\
-	}
-#define NMTHDEFS (sizeof(multi_tap_or_hold) / sizeof(struct multi_tap_or_hold_def))
+#ifndef MULTI_TAP_HOLD_TIMEOUT
+#define MULTI_TAP_HOLD_TIMEOUT	190
+#endif /* MULTI_TAP_HOLD_TIMEOUT */
 
-enum multi_tap_or_hold_state {
+enum multi_tap_hold_state {
 	WAITING_PRESS,
 	WAITING_RELEASE_OR_T1,
 	WAITING_PRESS_OR_T2,
@@ -180,7 +172,8 @@ enum multi_tap_or_hold_state {
 	WAITING_RELEASE_FOR_L2,
 };
 
-struct multi_tap_or_hold_def {
+struct mult_tap_hold_control_st {
+	/* settings */
 	uint16_t kc;			/* keycode to sense */
 	uint8_t kc1;			/* first preferred keycode (instead of changing layer) */
 	uint8_t kc2;			/* second preferred keycode (instead of changing layer) */
@@ -188,21 +181,38 @@ struct multi_tap_or_hold_def {
 	uint8_t layer2;			/* second preferred layer number */
 	uint8_t toggle1;		/* toggle layer by single tapping */
 	uint8_t toggle2;		/* toggle layer by double tapping */
+	uint8_t enable:1;		/* enable this entry */
+	/* status */
+	uint8_t pending:1;		/* timer pending action exists */
+	enum multi_tap_hold_state state;
 	uint16_t timer;			/* timer for measuring interval */
-	bool pending;			/* timer pending action exists */
-	enum multi_tap_or_hold_state state;
 };
 
-static struct multi_tap_or_hold_def multi_tap_or_hold[] = {
-	MTHDEF(ML2X2X, KC_NO, KC_NO, 2, 2, 2, 3),
-	MTHDEF(MLAAXX, KC_LALT, KC_LALT, 0, 0, 5, 5),
-	MTHDEF(ML9867, KC_NO, KC_NO, 9, 8, 6, 7),
-};
+static struct mult_tap_hold_control_st multi_tap_hold_reg[MAX_MTH_REG] = {};
+
+void
+multi_tap_hold_reg_init(uint8_t index, uint16_t kc,
+			uint8_t kc1, uint8_t kc2,
+			uint8_t layer1, uint8_t layer2,
+			uint8_t toggle1, uint8_t toggle2)
+{
+	if (index >= MAX_MTH_REG) return;
+	multi_tap_hold_reg[index].kc = kc;
+	multi_tap_hold_reg[index].kc1 = kc1;
+	multi_tap_hold_reg[index].kc2 = kc2;
+	multi_tap_hold_reg[index].layer1 = layer1;
+	multi_tap_hold_reg[index].layer2 = layer2;
+	multi_tap_hold_reg[index].toggle1 = toggle1;
+	multi_tap_hold_reg[index].toggle2 = toggle2;
+	multi_tap_hold_reg[index].enable = 1;
+	multi_tap_hold_reg[index].pending = 0;
+	multi_tap_hold_reg[index].state = WAITING_PRESS;
+}
 
 static void
-mth_timer_action(struct multi_tap_or_hold_def *p)
+multi_tap_hold_timer_action(struct mult_tap_hold_control_st *p)
 {
-	p->pending = false;
+	p->pending = 0;
 	switch (p->state) {
 	case WAITING_RELEASE_OR_T1:
 		/* first hold action */
@@ -237,25 +247,25 @@ mth_timer_action(struct multi_tap_or_hold_def *p)
 }
 
 static void
-mth_process_record(struct multi_tap_or_hold_def *p, keyrecord_t *record)
+multi_tap_hold_process_record(struct mult_tap_hold_control_st *p, keyrecord_t *record)
 {
-	p->pending = false;
+	p->pending = 0;
 	switch (p->state) {
 	case WAITING_PRESS:
 		if (!record->event.pressed) break;
-		p->pending = true;
+		p->pending = 1;
 		p->timer = timer_read();
 		p->state = WAITING_RELEASE_OR_T1;
 		return;
 	case WAITING_RELEASE_OR_T1:
 		if (record->event.pressed) break;
-		p->pending = true;
+		p->pending = 1;
 		p->timer = timer_read();
 		p->state = WAITING_PRESS_OR_T2;
 		return;
 	case WAITING_PRESS_OR_T2:
 		if (!record->event.pressed) break;
-		p->pending = true;
+		p->pending = 1;
 		p->timer = timer_read();
 		p->state = WAITING_RELEASE_OR_T3;
 		return;
@@ -288,13 +298,14 @@ void
 housekeeping_task_mth(void)
 {
 	int i;
-	struct multi_tap_or_hold_def *p;
+	struct mult_tap_hold_control_st *p;
 
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
+	for (i = 0; i < MAX_MTH_REG; i++) {
+		p = &multi_tap_hold_reg[i];
+		if (!p->enable) continue;
 		if (!p->pending) continue;
-		if (timer_elapsed(p->timer) < MTH_TIMER) continue;
-		mth_timer_action(p);
+		if (timer_elapsed(p->timer) < MULTI_TAP_HOLD_TIMEOUT) continue;
+		multi_tap_hold_timer_action(p);
 	}
 }
 
@@ -302,19 +313,21 @@ bool
 process_record_mth(uint16_t keycode, keyrecord_t *record)
 {
 	int i;
-	struct multi_tap_or_hold_def *p;
+	struct mult_tap_hold_control_st *p;
 
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
+	for (i = 0; i < MAX_MTH_REG; i++) {
+		p = &multi_tap_hold_reg[i];
+		if (!p->enable) continue;
 		if (keycode != p->kc) continue;
-		mth_process_record(p, record);
+		multi_tap_hold_process_record(p, record);
 		return false;
 	}
 	/* other key events cause expiration of pending timer */
-	for (i = 0; i < NMTHDEFS; i++) {
-		p = &multi_tap_or_hold[i];
+	for (i = 0; i < MAX_MTH_REG; i++) {
+		p = &multi_tap_hold_reg[i];
+		if (!p->enable) continue;
 		if (!p->pending) continue;
-		mth_timer_action(p);
+		multi_tap_hold_timer_action(p);
 	}
 	return true;
 }
@@ -617,6 +630,13 @@ keyboard_post_init_user(void)
 	layer_auto_off_reg[6].immediate = 1;
 	layer_auto_off_reg[7].immediate = 1;
 #endif /* LAO_ENABLE */
+#ifdef MTH_ENABLE
+	uint8_t index = 0;
+	//                               kc      kc1      kc2     m1 m2 t1 t2
+	multi_tap_hold_reg_init(index++, ML2X2X, KC_NO  , KC_NO  , 2, 2, 2, 3);
+	multi_tap_hold_reg_init(index++, MLAAXX, KC_LALT, KC_LALT, 0, 0, 5, 5);
+	multi_tap_hold_reg_init(index++, ML9867, KC_NO  , KC_NO  , 9, 8, 6, 7);
+#endif /* MTH_ENABLE */
 }
 
 bool
