@@ -9,6 +9,9 @@
 #ifdef CONSOLE_ENABLE
 #include "print.h"
 #endif
+#ifdef KA_ENABLE
+#include "key_action.h"
+#endif
 
 #ifdef LAO_ENABLE
 
@@ -592,6 +595,9 @@ housekeeping_task_user(void)
 #if defined(MTH_ENABLE)
 	housekeeping_task_mth();
 #endif
+#if defined(KA_ENABLE)
+	housekeeping_task_ka();
+#endif
 }
 
 bool
@@ -610,6 +616,9 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 #if defined(MTH_ENABLE)
 		    process_record_mth(keycode, record) &&
 #endif
+#if defined(KA_ENABLE)
+		    process_record_ka(keycode, record) &&
+#endif
 		    true)) {
 		return false;
 	}
@@ -623,6 +632,9 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 void
 keyboard_post_init_user(void)
 {
+#ifdef KCR_ENABLE
+	debug_enable = 1;
+#endif /* KCR_ENABLE */
 #ifdef LAO_ENABLE
 	layer_auto_off_reg[2].enable = 1;
 	layer_auto_off_reg[6].enable = 1;
@@ -637,6 +649,13 @@ keyboard_post_init_user(void)
 	multi_tap_hold_reg_init(index++, MLAAXX, KC_LALT, KC_LALT, 0, 0, 5, 5);
 	multi_tap_hold_reg_init(index++, ML9867, KC_NO  , KC_NO  , 9, 8, 6, 7);
 #endif /* MTH_ENABLE */
+#ifdef KA_ENABLE
+	uint8_t index = 0;
+	key_action_config_layer4   (key_action_reg_init(index++, ML2X2X), 2, 2, 2, 3);
+	key_action_config_kc_layer2(key_action_reg_init(index++, MLAAXX), KC_LALT, 5);
+	key_action_config_layer4   (key_action_reg_init(index++, ML9867), 9, 6, 8, 7);
+	key_action_config_fast_kc2 (key_action_reg_init(index++, MLALTR), KC_LALT, KC_R);
+#endif /* KA_ENABLE */
 }
 
 bool
