@@ -10,7 +10,8 @@
 //#define KA_DEBUG	1
 
 /* Special Keys */
-#define ML2X2X	QK_USER_0
-#define MLAAXX	QK_USER_1
-#define ML9867	QK_USER_2
-#define MLALTR	QK_USER_3
+#define MO2X	QK_USER_0
+#define LALTX	QK_USER_1
+#define L9687	QK_USER_2
+#define LALTR	QK_USER_3
+#define KCXV	QK_USER_4

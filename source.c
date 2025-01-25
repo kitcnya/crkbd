@@ -651,10 +651,11 @@ keyboard_post_init_user(void)
 #endif /* MTH_ENABLE */
 #ifdef KA_ENABLE
 	uint8_t index = 0;
-	key_action_config_layer4   (key_action_reg_init(index++, ML2X2X), 2, 2, 2, 3);
-	key_action_config_kc_layer2(key_action_reg_init(index++, MLAAXX), KC_LALT, 5);
-	key_action_config_layer4   (key_action_reg_init(index++, ML9867), 9, 6, 8, 7);
-	key_action_config_fast_kc2 (key_action_reg_init(index++, MLALTR), KC_LALT, KC_R);
+	key_action_config_layer4   (key_action_reg_init(index++, MO2X), 2, 2, 2, 3);
+	key_action_config_kc_layer2(key_action_reg_init(index++, LALTX), KC_LALT, 5);
+	key_action_config_layer4   (key_action_reg_init(index++, L9687), 9, 6, 8, 7);
+	key_action_config_fast_kc2 (key_action_reg_init(index++, LALTR), KC_LALT, KC_R);
+	key_action_config_kc2      (key_action_reg_init(index++, KCXV), KC_X, KC_V);
 #endif /* KA_ENABLE */
 }
 
