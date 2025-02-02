@@ -106,237 +106,6 @@ process_record_lao(uint16_t keycode, keyrecord_t *record)
 
 #endif /* LAO_ENABLE */
 
-#ifdef MTH_ENABLE
-
-/*
- * Multi Tap or Hold layer selection
- * =================================
- *
- * kc is pressed then released after the T1:
- *
- * 0-------------->T1 (waiting for release)
- * +---------------+-----------------
- * |== kc =========|============
- * |               |== MO(L1) == momentary layer L1
- * +---------------+-----------------
- *
- * kc is pressed then released with in the T1,
- * then no kc actions with in the T2:
- *
- * 0-------------->T1 (waiting for release)
- * |        0------|------->T2 (waiting for press again)
- * +--------+------+--------+--------
- * |== kc ==|      |        |
- * |        |      |        |== TG(L1) == toggle layer L1
- * +--------+------+--------+--------
- *
- * kc is pressed then released with in the T1,
- * then kc is pressed again with in the T2 then released after the T3:
- *
- * 0-------------->T1 (waiting for release)
- * |        0------|------->T2 (waiting for press again)
- * |        |      |   0----|--------->T3 (waiting for release)
- * +--------+------+---+----+----------+-----------------
- * |== kc ==|      |   |    |          |
- * |        |      |   |== kc =========|============
- * |        |      |   |    |          |== MO(L2) == momentary layer L2
- * +--------+------+---+----+----------+-----------------
- *
- * kc is pressed then released with in the T1,
- * then kc is pressed again with in the T2 then released with in the T3:
- *
- * 0-------------->T1 (waiting for release)
- * |        0------|------->T2 (waiting for press again)
- * |        |      |   0----|--------->T3 (waiting for release)
- * +--------+------+---+----+---+------+-----------------
- * |== kc ==|      |   |    |   |      |
- * |        |      |   |== kc ==|      |
- * |        |      |   |    |   |== TG(L2) == toggle layer L2
- * +--------+------+---+----+---+------+-----------------
- *
- * Key code extension:
- * momentary action (i.e. MO()) can be replaced by normal key press and release action.
- */
-
-#ifndef MAX_MTH_REG
-#define MAX_MTH_REG	4
-#endif /* MAX_MTH_REG */
-
-#ifndef MULTI_TAP_HOLD_TIMEOUT
-#define MULTI_TAP_HOLD_TIMEOUT	190
-#endif /* MULTI_TAP_HOLD_TIMEOUT */
-
-enum multi_tap_hold_state {
-	WAITING_PRESS,
-	WAITING_RELEASE_OR_T1,
-	WAITING_PRESS_OR_T2,
-	WAITING_RELEASE_OR_T3,
-	WAITING_RELEASE_FOR_L1,
-	WAITING_RELEASE_FOR_L2,
-};
-
-struct mult_tap_hold_control_st {
-	/* settings */
-	uint16_t kc;			/* keycode to sense */
-	uint8_t kc1;			/* first preferred keycode (instead of changing layer) */
-	uint8_t kc2;			/* second preferred keycode (instead of changing layer) */
-	uint8_t layer1;			/* first preferred layer number */
-	uint8_t layer2;			/* second preferred layer number */
-	uint8_t toggle1;		/* toggle layer by single tapping */
-	uint8_t toggle2;		/* toggle layer by double tapping */
-	uint8_t enable:1;		/* enable this entry */
-	/* status */
-	uint8_t pending:1;		/* timer pending action exists */
-	enum multi_tap_hold_state state;
-	uint16_t timer;			/* timer for measuring interval */
-};
-
-static struct mult_tap_hold_control_st multi_tap_hold_reg[MAX_MTH_REG] = {};
-
-void
-multi_tap_hold_reg_init(uint8_t index, uint16_t kc,
-			uint8_t kc1, uint8_t kc2,
-			uint8_t layer1, uint8_t layer2,
-			uint8_t toggle1, uint8_t toggle2)
-{
-	if (index >= MAX_MTH_REG) return;
-	multi_tap_hold_reg[index].kc = kc;
-	multi_tap_hold_reg[index].kc1 = kc1;
-	multi_tap_hold_reg[index].kc2 = kc2;
-	multi_tap_hold_reg[index].layer1 = layer1;
-	multi_tap_hold_reg[index].layer2 = layer2;
-	multi_tap_hold_reg[index].toggle1 = toggle1;
-	multi_tap_hold_reg[index].toggle2 = toggle2;
-	multi_tap_hold_reg[index].enable = 1;
-	multi_tap_hold_reg[index].pending = 0;
-	multi_tap_hold_reg[index].state = WAITING_PRESS;
-}
-
-static void
-multi_tap_hold_timer_action(struct mult_tap_hold_control_st *p)
-{
-	p->pending = 0;
-	switch (p->state) {
-	case WAITING_RELEASE_OR_T1:
-		/* first hold action */
-		if (p->kc1 == KC_NO) {
-			/* momentary layer 1 */
-			layer_on(p->layer1);
-		} else {
-			/* press keycode 1 */
-			register_code(p->kc1);
-		}
-		p->state = WAITING_RELEASE_FOR_L1;
-		return;
-	case WAITING_PRESS_OR_T2:
-		/* toggle layer 1 */
-		layer_invert(p->toggle1);
-		break;
-	case WAITING_RELEASE_OR_T3:
-		/* second hold action */
-		if (p->kc2 == KC_NO) {
-			/* momentary layer 2 */
-			layer_on(p->layer2);
-		} else {
-			/* press keycode 2 */
-			register_code(p->kc2);
-		}
-		p->state = WAITING_RELEASE_FOR_L2;
-		return;
-	default:
-		break;
-	}
-	p->state = WAITING_PRESS;
-}
-
-static void
-multi_tap_hold_process_record(struct mult_tap_hold_control_st *p, keyrecord_t *record)
-{
-	p->pending = 0;
-	switch (p->state) {
-	case WAITING_PRESS:
-		if (!record->event.pressed) break;
-		p->pending = 1;
-		p->timer = timer_read();
-		p->state = WAITING_RELEASE_OR_T1;
-		return;
-	case WAITING_RELEASE_OR_T1:
-		if (record->event.pressed) break;
-		p->pending = 1;
-		p->timer = timer_read();
-		p->state = WAITING_PRESS_OR_T2;
-		return;
-	case WAITING_PRESS_OR_T2:
-		if (!record->event.pressed) break;
-		p->pending = 1;
-		p->timer = timer_read();
-		p->state = WAITING_RELEASE_OR_T3;
-		return;
-	case WAITING_RELEASE_OR_T3:
-		if (record->event.pressed) break;
-		/* toggle layer 2 */
-		layer_invert(p->toggle2);
-		break;
-	case WAITING_RELEASE_FOR_L1:
-		if (p->kc1 == KC_NO) {
-			layer_off(p->layer1);
-		} else {
-			unregister_code(p->kc1);
-		}
-		break;
-	case WAITING_RELEASE_FOR_L2:
-		if (p->kc2 == KC_NO) {
-			layer_off(p->layer2);
-		} else {
-			unregister_code(p->kc2);
-		}
-		break;
-	default:
-		break;
-	}
-	p->state = WAITING_PRESS;
-}
-
-void
-housekeeping_task_mth(void)
-{
-	int i;
-	struct mult_tap_hold_control_st *p;
-
-	for (i = 0; i < MAX_MTH_REG; i++) {
-		p = &multi_tap_hold_reg[i];
-		if (!p->enable) continue;
-		if (!p->pending) continue;
-		if (timer_elapsed(p->timer) < MULTI_TAP_HOLD_TIMEOUT) continue;
-		multi_tap_hold_timer_action(p);
-	}
-}
-
-bool
-process_record_mth(uint16_t keycode, keyrecord_t *record)
-{
-	int i;
-	struct mult_tap_hold_control_st *p;
-
-	for (i = 0; i < MAX_MTH_REG; i++) {
-		p = &multi_tap_hold_reg[i];
-		if (!p->enable) continue;
-		if (keycode != p->kc) continue;
-		multi_tap_hold_process_record(p, record);
-		return false;
-	}
-	/* other key events cause expiration of pending timer */
-	for (i = 0; i < MAX_MTH_REG; i++) {
-		p = &multi_tap_hold_reg[i];
-		if (!p->enable) continue;
-		if (!p->pending) continue;
-		multi_tap_hold_timer_action(p);
-	}
-	return true;
-}
-
-#endif /* MTH_ENABLE */
-
 #ifdef TMA_ENABLE
 
 /*
@@ -592,9 +361,6 @@ housekeeping_task_user(void)
 #if defined(TMA_ENABLE)
 	housekeeping_task_tma();
 #endif
-#if defined(MTH_ENABLE)
-	housekeeping_task_mth();
-#endif
 #if defined(KA_ENABLE)
 	housekeeping_task_ka();
 #endif
@@ -612,9 +378,6 @@ process_record_user(uint16_t keycode, keyrecord_t *record)
 #endif
 #if defined(TMA_ENABLE)
 		    process_record_tma(keycode, record) &&
-#endif
-#if defined(MTH_ENABLE)
-		    process_record_mth(keycode, record) &&
 #endif
 #if defined(KA_ENABLE)
 		    process_record_ka(keycode, record) &&
@@ -642,13 +405,6 @@ keyboard_post_init_user(void)
 	layer_auto_off_reg[6].immediate = 1;
 	layer_auto_off_reg[7].immediate = 1;
 #endif /* LAO_ENABLE */
-#ifdef MTH_ENABLE
-	uint8_t index = 0;
-	//                               kc      kc1      kc2     m1 m2 t1 t2
-	multi_tap_hold_reg_init(index++, ML2X2X, KC_NO  , KC_NO  , 2, 2, 2, 3);
-	multi_tap_hold_reg_init(index++, MLAAXX, KC_LALT, KC_LALT, 0, 0, 5, 5);
-	multi_tap_hold_reg_init(index++, ML9867, KC_NO  , KC_NO  , 9, 8, 6, 7);
-#endif /* MTH_ENABLE */
 #ifdef KA_ENABLE
 	uint8_t index = 0;
 	key_action_config_layer4   (key_action_reg_init(index++, MO2X), 2, 2, 2, 3);
